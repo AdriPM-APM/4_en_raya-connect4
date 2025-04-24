@@ -497,6 +497,14 @@
     }
 
     // ... [Resto del código minimax y funciones auxiliares permanecen igual]
+    function getAvailableRow(col) {
+        for (let row = ROWS - 1; row >= 0; row--) {
+            if (board[row][col] === 0) {
+                return row;
+            }
+        }
+        return null;
+    }
 
     function getColFromEvent(e) {
         const rect = canvas.getBoundingClientRect();
@@ -506,7 +514,7 @@
         } else {
             x = e.clientX - rect.left;
         }
-        return Math.floor(x / (canvas.width / COLS));
+        return Math.floor(x / cellSize);
     }
 
     function switchPlayer() {
@@ -527,29 +535,151 @@
         message.textContent = msg;
     }
 
-    // Event Listeners
-    restartBtn.addEventListener("click", initGame);
+    function checkWin(row, col, player) {
+        // Check horizontal
+        let count = 0;
+        for (let c = Math.max(0, col - 3); c <= Math.min(COLS - 1, col + 3); c++) {
+            if (board[row][c] === player) {
+                count++;
+                if (count >= 4) return true;
+            } else {
+                count = 0;
+            }
+        }
 
-    modeSelect.addEventListener("change", () => {
-        aiEnabled = modeSelect.value === "ai";
-        aiLevelSelect.style.display = aiEnabled ? "inline-block" : "none";
-        aiLevelLabel.style.display = aiEnabled ? "inline-block" : "none";
-        initGame();
-    });
+        // Check vertical
+        count = 0;
+        for (let r = Math.max(0, row - 3); r <= Math.min(ROWS - 1, row + 3); r++) {
+            if (board[r][col] === player) {
+                count++;
+                if (count >= 4) return true;
+            } else {
+                count = 0;
+            }
+        }
 
-    aiLevelSelect.addEventListener("change", () => {
-        aiLevel = aiLevelSelect.value;
-        initGame();
-    });
+        // Check diagonal (top-left to bottom-right)
+        count = 0;
+        let startRow = row - Math.min(row, col);
+        let startCol = col - Math.min(row, col);
+        for (let i = 0; startRow + i < ROWS && startCol + i < COLS; i++) {
+            if (board[startRow + i][startCol + i] === player) {
+                count++;
+                if (count >= 4) return true;
+            } else {
+                count = 0;
+            }
+        }
 
-    // Inicialización y responsive
-    window.addEventListener('resize', resizeCanvas);
-    window.addEventListener('orientationchange', resizeCanvas);
-    
-    document.addEventListener("DOMContentLoaded", () => {
-        resizeCanvas();
-        initGame();
-    });
-    </script>
-</body>
-</html>
+        // Check diagonal (top-right to bottom-left)
+        count = 0;
+        startRow = row - Math.min(row, COLS - 1 - col);
+        startCol = col + Math.min(row, COLS - 1 - col);
+        for (let i = 0; startRow + i < ROWS && startCol - i >= 0; i++) {
+            if (board[startRow + i][startCol - i] === player) {
+                count++;
+                if (count >= 4) return true;
+            } else {
+                count = 0;
+            }
+        }
+
+        return false;
+    }
+
+    function isBoardFull() {
+        for (let row = 0; row < ROWS; row++) {
+            for (let col = 0; col < COLS; col++) {
+                if (board[row][col] === 0) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function getValidColumns() {
+        let validColumns = [];
+        for (let col = 0; col < COLS; col++) {
+            if (getAvailableRow(col) !== null) {
+                validColumns.push(col);
+            }
+        }
+        return validColumns;
+    }
+
+    function findWinningMove(player) {
+        for (let col = 0; col < COLS; col++) {
+            let row = getAvailableRow(col);
+            if (row !== null) {
+                board[row][col] = player;
+                if (checkWin(row, col, player)) {
+                    board[row][col] = 0; // Reset the board
+                    return col;
+                }
+                board[row][col] = 0; // Reset the board
+            }
+        }
+        return null;
+    }
+    function evaluateWindow(window, player) {
+        let score = 0;
+        let opponent = (player === PLAYER1) ? PLAYER2 : PLAYER1;
+
+        let playerCount = window.filter(x => x === player).length;
+        let emptyCount = window.filter(x => x === 0).length;
+        let opponentCount = window.filter(x => x === opponent).length;
+
+        if (playerCount === 4) {
+            score += 100;
+        } else if (playerCount === 3 && emptyCount === 1) {
+            score += 5;
+        } else if (playerCount === 2 && emptyCount === 2) {
+            score += 2;
+        }
+
+        if (opponentCount === 3 && emptyCount === 1) {
+            score -= 4;
+        }
+
+        return score;
+    }
+
+    function scorePosition(board, player) {
+        let score = 0;
+
+        // Score center column
+        let centerArray = [];
+        for (let i = 0; i < ROWS; i++) {
+            centerArray.push(board[i][COLS / 2]);
+        }
+        let centerCount = centerArray.filter(x => x === player).length;
+        score += centerCount * 3;
+
+        // Score Horizontal
+        for (let r = 0; r < ROWS; r++) {
+            let rowArray = [];
+            for (let i = 0; i < COLS; i++) {
+                rowArray.push(board[r][i]);
+            }
+            for (let c = 0; c < COLS - 3; c++) {
+                let window = rowArray.slice(c, c + 4);
+                score += evaluateWindow(window, player);
+            }
+        }
+
+        // Score Vertical
+        for (let c = 0; c < COLS; c++) {
+            let colArray = [];
+            for (let i = 0; i < ROWS; i++) {
+                colArray.push(board[i][c]);
+            }
+            for (let r = 0; r < ROWS - 3; r++) {
+                let window = colArray.slice(r, r + 4);
+                score += evaluateWindow(window, player);
+            }
+        }
+
+        // Score positive sloped diagonals
+        for (let r = 0; r < ROWS - 3; r++) {
+       
