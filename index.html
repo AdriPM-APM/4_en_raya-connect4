@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            background: #232946;
+            background: #333; /* Dark gray background */
             color: #f4f4f4;
             margin: 0;
             padding: 0;
@@ -108,7 +108,7 @@
         }
 
         #gameBoard {
-            background: #21209c;
+            background: #0077cc; /* A more distinct blue for the board */
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
             cursor: pointer;
@@ -185,6 +185,10 @@
     </style>
 </head>
 <body>
+    <div class="header-info">
+        <span>Usuario: AdriPM-APM</span>
+        <span>Fecha: 2025-04-24 19:37:26 UTC</span>
+    </div>
     <div class="container">
         <h1>4 en Raya</h1>
         <div class="controls">
@@ -217,7 +221,7 @@
     const PLAYER2 = 2; // Amarillo
 
     const COLORS = {
-        0: "#21209c",
+        0: "#0077cc", // A more distinct blue for the board
         1: "#ff595e", // Rojo
         2: "#ffe066", // Amarillo
         preview: "#a3c4f3"
@@ -674,8 +678,4 @@
                 let window = colArray.slice(r, r + 4);
                 score += evaluateWindow(window, player);
             }
-        }
-
-        // Score positive sloped diagonals
-        for (let r = 0; r < ROWS - 3; r++) {
-       
+   
