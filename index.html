@@ -5,181 +5,149 @@
     <title>4 en Raya - AdriPM-APM</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <style>
+        :root {
+            --cell-size: min(12vw, 70px);
+            --board-color: #0077cc;
+            --player1-color: #ff595e;
+            --player2-color: #ffe066;
+        }
+
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            background: #333; /* Dark gray background */
+            background: #333;
             color: #f4f4f4;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            align-items: center;
         }
 
         .header-info {
+            width: 100%;
             background: rgba(0,0,0,0.2);
             padding: 8px 16px;
             font-size: 0.9rem;
             display: flex;
             justify-content: space-between;
             color: #eebbc3;
+            box-sizing: border-box;
         }
 
         .container {
             max-width: 800px;
             margin: 20px auto;
-            padding: 24px 16px 32px 16px;
+            padding: 24px;
             background: #22223b;
             border-radius: 12px;
             box-shadow: 0 2px 24px rgba(0,0,0,0.3);
             text-align: center;
-            flex: 1;
-        }
-
-        h1 {
-            margin-bottom: 8px;
-            color: #eebbc3;
-            text-shadow: 0 1px 6px #16161a44;
-            font-size: 2rem;
         }
 
         .controls {
-            margin: 20px 0 12px 0;
+            margin: 20px 0;
             display: flex;
             justify-content: center;
-            align-items: center;
-            gap: 14px;
+            gap: 15px;
             flex-wrap: wrap;
         }
 
-        .controls label {
+        button, select {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
             font-size: 1rem;
+            cursor: pointer;
+        }
+
+        button {
+            background: #eebbc3;
+            color: #232946;
         }
 
         select {
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: none;
             background: #2f2f4d;
             color: #f4f4f4;
+        }
+
+        .board {
+            background: var(--board-color);
+            padding: 10px;
+            border-radius: 10px;
+            display: inline-grid;
+            grid-template-columns: repeat(7, var(--cell-size));
+            grid-template-rows: repeat(6, var(--cell-size));
+            gap: 5px;
+            margin: 20px auto;
+        }
+
+        .cell {
+            background: white;
+            border-radius: 50%;
+            width: 100%;
+            height: 100%;
+            position: relative;
             cursor: pointer;
+            transition: background-color 0.3s ease;
         }
 
-        #restartBtn {
-            background: #eebbc3;
-            color: #232946;
-            border: none;
-            border-radius: 6px;
-            padding: 8px 18px;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-left: 12px;
-            transition: all 0.2s;
+        .cell::before {
+            content: '';
+            position: absolute;
+            width: 90%;
+            height: 90%;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: background-color 0.3s ease;
         }
 
-        #restartBtn:hover {
-            background: #ffd6e0;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        .cell.player1::before {
+            background: var(--player1-color);
+            box-shadow: inset -4px -4px 8px rgba(0,0,0,0.2);
         }
 
-        #restartBtn:active {
-            transform: translateY(0);
+        .cell.player2::before {
+            background: var(--player2-color);
+            box-shadow: inset -4px -4px 8px rgba(0,0,0,0.2);
+        }
+
+        .cell:hover {
+            background: #f0f0f0;
         }
 
         #turnIndicator {
-            margin-bottom: 16px;
             font-size: 1.2rem;
-            letter-spacing: 1px;
-        }
-
-        #currentPlayer {
-            font-weight: bold;
-            color: #ff595e;
-            transition: color 0.3s;
-        }
-
-        #gameContainer {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 16px;
-            width: 100%;
-            touch-action: manipulation;
-        }
-
-        #gameBoard {
-            background: #0077cc; /* A more distinct blue for the board */
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            cursor: pointer;
-            transition: all 0.3s;
-            width: 100%;
-            max-width: 700px;
-            height: auto;
-            aspect-ratio: 7 / 6;
-            display: block;
-        }
-
-        #gameBoard:hover {
-            box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+            margin: 15px 0;
         }
 
         #message {
             min-height: 24px;
             font-size: 1.15rem;
-            font-weight: 500;
             color: #eebbc3;
-            margin-top: 10px;
-            padding: 8px;
-            border-radius: 8px;
-            transition: background-color 0.3s;
+            margin-top: 15px;
         }
 
-        #message:not(:empty) {
-            background-color: rgba(0,0,0,0.2);
-        }
+        @media (max-width: 600px) {
+            :root {
+                --cell-size: 45px;
+            }
 
-        @media (max-width: 760px) {
             .container {
-                margin: 10px auto;
-                padding: 16px 8px;
+                padding: 15px;
+                margin: 10px;
+            }
+
+            .controls {
+                flex-direction: column;
             }
 
             .header-info {
                 flex-direction: column;
                 align-items: center;
                 text-align: center;
-                gap: 4px;
-            }
-
-            #gameBoard {
-                max-width: 96vw;
-            }
-
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            .controls {
-                gap: 8px;
-            }
-
-            #restartBtn {
-                margin-left: 0;
-                width: 100%;
-                max-width: 200px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .controls {
-                flex-direction: column;
-                align-items: stretch;
-                padding: 0 20px;
-            }
-
-            select {
-                width: 100%;
             }
         }
     </style>
@@ -192,12 +160,10 @@
     <div class="container">
         <h1>4 en Raya</h1>
         <div class="controls">
-            <label for="modeSelect">Modo de Juego:</label>
             <select id="modeSelect">
                 <option value="local">2 Jugadores</option>
                 <option value="ai">Jugador vs IA</option>
             </select>
-            <label for="aiLevel" id="aiLevelLabel" style="display:none;">Dificultad IA:</label>
             <select id="aiLevel" style="display:none;">
                 <option value="easy">Fácil</option>
                 <option value="medium">Medio</option>
@@ -205,477 +171,317 @@
             </select>
             <button id="restartBtn">Reiniciar Juego</button>
         </div>
-        <div id="turnIndicator">Turno: <span id="currentPlayer">Rojo</span></div>
-        <div id="gameContainer">
-            <canvas id="gameBoard" width="700" height="600" aria-label="Tablero de 4 en raya"></canvas>
-        </div>
+        <div id="turnIndicator">Turno: <span style="color: var(--player1-color)">Rojo</span></div>
+        <div class="board" id="board"></div>
         <div id="message"></div>
     </div>
     <script>
-    // --- Configuración del juego ---
-    const ROWS = 6;
-    const COLS = 7;
-    const BASE_CELL_SIZE = 100;
+        const ROWS = 6;
+        const COLS = 7;
+        const PLAYER1 = 1;
+        const PLAYER2 = 2;
 
-    const PLAYER1 = 1; // Rojo
-    const PLAYER2 = 2; // Amarillo
+        let board = [];
+        let currentPlayer = PLAYER1;
+        let gameOver = false;
+        let aiEnabled = false;
 
-    const COLORS = {
-        0: "#0077cc", // A more distinct blue for the board
-        1: "#ff595e", // Rojo
-        2: "#ffe066", // Amarillo
-        preview: "#a3c4f3"
-    };
+        const boardElement = document.getElementById('board');
+        const turnIndicator = document.getElementById('turnIndicator');
+        const message = document.getElementById('message');
+        const modeSelect = document.getElementById('modeSelect');
+        const aiLevelSelect = document.getElementById('aiLevel');
+        const restartBtn = document.getElementById('restartBtn');
 
-    let board = [];
-    let currentPlayer = PLAYER1;
-    let gameOver = false;
-    let animating = false;
-    let winner = null;
-    let aiEnabled = false;
-    let aiLevel = "easy";
-    let cellSize = BASE_CELL_SIZE;
-
-    const canvas = document.getElementById("gameBoard");
-    const ctx = canvas.getContext("2d");
-    const turnIndicator = document.getElementById("currentPlayer");
-    const message = document.getElementById("message");
-    const restartBtn = document.getElementById("restartBtn");
-    const modeSelect = document.getElementById("modeSelect");
-    const aiLevelSelect = document.getElementById("aiLevel");
-    const aiLevelLabel = document.getElementById("aiLevelLabel");
-
-    function resizeCanvas() {
-        const container = document.getElementById("gameContainer");
-        let w = container.offsetWidth;
-        let h = window.innerHeight * 0.6;
-        let maxW = Math.min(700, w);
-        let maxH = Math.min(600, h);
-
-        let aspectW = maxW;
-        let aspectH = aspectW * (ROWS/COLS);
-        if (aspectH > maxH) {
-            aspectH = maxH;
-            aspectW = aspectH * (COLS/ROWS);
-        }
-        
-        canvas.width = aspectW;
-        canvas.height = aspectH;
-        cellSize = canvas.width / COLS;
-        
-        drawBoard();
-    }
-
-    function initGame() {
-        board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
-        currentPlayer = PLAYER1;
-        gameOver = false;
-        winner = null;
-        animating = false;
-        updateTurnIndicator();
-        message.textContent = "";
-        drawBoard();
-        if (aiEnabled && currentPlayer === PLAYER2) {
-            setTimeout(aiMove, 400);
-        }
-    }
-
-    function drawBoard(previewCol = null) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Fondo
-        ctx.fillStyle = COLORS[0];
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Rejilla
-        ctx.strokeStyle = "#1a1a3c";
-        ctx.lineWidth = Math.max(2, cellSize * 0.02);
-        
-        for (let i = 1; i < COLS; i++) {
-            ctx.beginPath();
-            ctx.moveTo(i * cellSize, 0);
-            ctx.lineTo(i * cellSize, canvas.height);
-            ctx.stroke();
-        }
-        
-        for (let i = 1; i < ROWS; i++) {
-            ctx.beginPath();
-            ctx.moveTo(0, i * cellSize);
-            ctx.lineTo(canvas.width, i * cellSize);
-            ctx.stroke();
-        }
-
-        // Agujeros y fichas
-        for (let row = 0; row < ROWS; row++) {
-            for (let col = 0; col < COLS; col++) {
-                const xc = col * cellSize + cellSize / 2;
-                const yc = row * cellSize + cellSize / 2;
-                const radius = cellSize * 0.4;
-
-                // Agujero
-                ctx.beginPath();
-                ctx.arc(xc, yc, radius, 0, 2 * Math.PI);
-                ctx.fillStyle = "#f4f4f4";
-                ctx.fill();
-
-                // Ficha si existe
-                if (board[row][col]) {
-                    drawDisc(col, row, COLORS[board[row][col]]);
-                }
-            }
-        }
-
-        // Vista previa
-        if (previewCol !== null && !gameOver && !animating) {
-            const row = getAvailableRow(previewCol);
-            if (row !== null) {
-                drawDisc(previewCol, row, COLORS[currentPlayer], 0.3);
-            }
-        }
-    }
-
-    function drawDisc(col, row, color, alpha = 1) {
-        const xc = col * cellSize + cellSize / 2;
-        const yc = row * cellSize + cellSize / 2;
-        const radius = cellSize * 0.35;
-
-        ctx.save();
-        ctx.globalAlpha = alpha;
-        
-        // Sombra
-        ctx.shadowColor = "rgba(0,0,0,0.3)";
-        ctx.shadowBlur = Math.max(4, cellSize * 0.08);
-        ctx.shadowOffsetY = 2;
-
-        // Gradiente para efecto 3D
-        const gradient = ctx.createRadialGradient(
-            xc - radius * 0.3, yc - radius * 0.3, radius * 0.1,
-            xc, yc, radius
-        );
-        gradient.addColorStop(0, '#fff');
-        gradient.addColorStop(0.2, color);
-        gradient.addColorStop(1, color);
-
-        ctx.beginPath();
-        ctx.arc(xc, yc, radius, 0, 2 * Math.PI);
-        ctx.fillStyle = gradient;
-        ctx.fill();
-
-        ctx.restore();
-    }
-
-    function enqueueMove(col, player, callback) {
-        if (gameOver || animating || (aiEnabled && player === PLAYER2)) return;
-        
-        const row = getAvailableRow(col);
-        if (row === null) return;
-        
-        animating = true;
-        animateDrop(col, row, player, () => {
-            board[row][col] = player;
-            animating = false;
-            
-            if (checkWin(row, col, player)) {
-                winner = player;
-                gameOver = true;
-                showMessage(`¡${getPlayerName(player)} gana!`);
-            } else if (isBoardFull()) {
-                gameOver = true;
-                showMessage("¡Empate!");
-            } else {
-                switchPlayer();
-                if (aiEnabled && currentPlayer === PLAYER2) {
-                    setTimeout(aiMove, 350);
-                }
-            }
+        function initGame() {
+            board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+            currentPlayer = PLAYER1;
+            gameOver = false;
+            createBoard();
             updateTurnIndicator();
-            drawBoard();
-            if (callback) callback(row, col, player);
-        });
-    }
+            message.textContent = '';
+        }
 
-    function animateDrop(col, targetRow, player, callback) {
-        let y = -cellSize / 2;
-        const x = col * cellSize + cellSize / 2;
-        const yEnd = targetRow * cellSize + cellSize / 2;
-        let velocity = 0;
-        const gravity = cellSize * 0.025;
-        const bounce = 0.6;
-        let bounces = 0;
-        const maxBounces = 2;
+        function createBoard() {
+            boardElement.innerHTML = '';
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.col = col;
+                    cell.dataset.row = row;
+                    cell.addEventListener('click', () => makeMove(col));
+                    boardElement.appendChild(cell);
+                }
+            }
+            updateBoardDisplay();
+        }
 
-        function frame() {
-            drawBoard();
-            
-            // Dibujar ficha cayendo
-            drawDisc(col, y/cellSize, COLORS[player]);
+        function updateBoardDisplay() {
+            const cells = boardElement.children;
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const index = row * COLS + col;
+                    cells[index].className = 'cell' + 
+                        (board[row][col] === PLAYER1 ? ' player1' : 
+                         board[row][col] === PLAYER2 ? ' player2' : '');
+                }
+            }
+        }
 
-            if (y < yEnd) {
-                velocity += gravity;
-                y += velocity;
-                
-                // Si llegamos al final
-                if (y > yEnd) {
-                    if (bounces < maxBounces) {
-                        y = yEnd;
-                        velocity = -velocity * bounce;
-                        bounces++;
-                    } else {
-                        y = yEnd;
+        function makeMove(col) {
+            if (gameOver || (aiEnabled && currentPlayer === PLAYER2)) return;
+
+            const row = getLowestEmptyRow(col);
+            if (row === -1) return;
+
+            board[row][col] = currentPlayer;
+            updateBoardDisplay();
+
+            if (checkWin(row, col)) {
+                gameOver = true;
+                message.textContent = `¡${getPlayerName(currentPlayer)} gana!`;
+                return;
+            }
+
+            if (isBoardFull()) {
+                gameOver = true;
+                message.textContent = '¡Empate!';
+                return;
+            }
+
+            currentPlayer = currentPlayer === PLAYER1 ? PLAYER2 : PLAYER1;
+            updateTurnIndicator();
+
+            if (aiEnabled && currentPlayer === PLAYER2) {
+                setTimeout(makeAIMove, 500);
+            }
+        }
+
+        function getLowestEmptyRow(col) {
+            for (let row = ROWS - 1; row >= 0; row--) {
+                if (board[row][col] === 0) return row;
+            }
+            return -1;
+        }
+
+        function checkWin(row, col) {
+            const dirs = [
+                [[0,1], [0,-1]],   // horizontal
+                [[1,0], [-1,0]],   // vertical
+                [[1,1], [-1,-1]],  // diagonal \
+                [[1,-1], [-1,1]]   // diagonal /
+            ];
+
+            return dirs.some(dir => {
+                let count = 1;
+                dir.forEach(([dx, dy]) => {
+                    let x = col + dx;
+                    let y = row + dy;
+                    while (y >= 0 && y < ROWS && x >= 0 && x < COLS && board[y][x] === currentPlayer) {
+                        count++;
+                        x += dx;
+                        y += dy;
+                    }
+                });
+                return count >= 4;
+            });
+        }
+
+        function isBoardFull() {
+            return board[0].every(cell => cell !== 0);
+        }
+
+        function getPlayerName(player) {
+            if (aiEnabled && player === PLAYER2) return 'IA';
+            return player === PLAYER1 ? 'Rojo' : 'Amarillo';
+        }
+
+        function updateTurnIndicator() {
+            const color = currentPlayer === PLAYER1 ? 'var(--player1-color)' : 'var(--player2-color)';
+            turnIndicator.innerHTML = `Turno: <span style="color: ${color}">${getPlayerName(currentPlayer)}</span>`;
+        }
+
+        function makeAIMove() {
+            const level = aiLevelSelect.value;
+            let col;
+
+            if (level === 'easy') {
+                col = getRandomValidMove();
+            } else if (level === 'medium') {
+                col = getMediumAIMove();
+            } else {
+                col = getHardAIMove();
+            }
+
+            if (col !== null) makeMove(col);
+        }
+
+        function getRandomValidMove() {
+            const validMoves = [];
+            for (let col = 0; col < COLS; col++) {
+                if (getLowestEmptyRow(col) !== -1) validMoves.push(col);
+            }
+            return validMoves[Math.floor(Math.random() * validMoves.length)];
+        }
+
+        function getMediumAIMove() {
+            // First try to win
+            for (let col = 0; col < COLS; col++) {
+                const row = getLowestEmptyRow(col);
+                if (row !== -1) {
+                    board[row][col] = PLAYER2;
+                    if (checkWin(row, col)) {
+                        board[row][col] = 0;
+                        return col;
+                    }
+                    board[row][col] = 0;
+                }
+            }
+
+            // Then try to block opponent
+            for (let col = 0; col < COLS; col++) {
+                const row = getLowestEmptyRow(col);
+                if (row !== -1) {
+                    board[row][col] = PLAYER1;
+                    if (checkWin(row, col)) {
+                        board[row][col] = 0;
+                        return col;
+                    }
+                    board[row][col] = 0;
+                }
+            }
+
+            return getRandomValidMove();
+        }
+
+        function getHardAIMove() {
+            let bestScore = -Infinity;
+            let bestMove = null;
+
+            for (let col = 0; col < COLS; col++) {
+                const row = getLowestEmptyRow(col);
+                if (row !== -1) {
+                    board[row][col] = PLAYER2;
+                    const score = minimax(board, 4, -Infinity, Infinity, false);
+                    board[row][col] = 0;
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMove = col;
                     }
                 }
-                requestAnimationFrame(frame);
-            } else {
-                if (callback) callback();
             }
+
+            return bestMove;
         }
-        frame();
-    }
 
-    canvas.addEventListener("mousemove", (e) => {
-        if (gameOver || animating || (aiEnabled && currentPlayer === PLAYER2)) return;
-        const col = getColFromEvent(e);
-        drawBoard(col);
-    });
-
-    canvas.addEventListener("mouseleave", () => {
-        if (!animating) drawBoard();
-    });
-
-    canvas.addEventListener("click", (e) => {
-        if (gameOver || animating || (aiEnabled && currentPlayer === PLAYER2)) return;
-        const col = getColFromEvent(e);
-        if (getAvailableRow(col) !== null) {
-            enqueueMove(col, currentPlayer);
-        }
-    });
-
-    canvas.addEventListener("touchstart", (e) => {
-        if (gameOver || animating || (aiEnabled && currentPlayer === PLAYER2)) return;
-        e.preventDefault();
-        const col = getColFromEvent(e);
-        if (getAvailableRow(col) !== null) {
-            enqueueMove(col, currentPlayer);
-        }
-    });
-
-    function aiMove() {
-        if (gameOver || animating) return;
-        let col = getAIMove();
-        if (col !== null) {
-            enqueueMove(col, PLAYER2);
-        }
-    }
-
-    function getAIMove() {
-        if (aiLevel === "easy") {
-            const valid = getValidColumns();
-            return valid[Math.floor(Math.random() * valid.length)];
-        }
-        
-        if (aiLevel === "medium") {
-            // Primero intenta ganar
-            let winCol = findWinningMove(PLAYER2);
-            if (winCol !== null) return winCol;
+        function minimax(board, depth, alpha, beta, isMaximizing) {
+            if (depth === 0) return evaluateBoard();
             
-            // Luego intenta bloquear
-            let blockCol = findWinningMove(PLAYER1);
-            if (blockCol !== null) return blockCol;
+            if (isMaximizing) {
+                let maxScore = -Infinity;
+                for (let col = 0; col < COLS; col++) {
+                    const row = getLowestEmptyRow(col);
+                    if (row !== -1) {
+                        board[row][col] = PLAYER2;
+                        const score = minimax(board, depth - 1, alpha, beta, false);
+                        board[row][col] = 0;
+                        maxScore = Math.max(score, maxScore);
+                        alpha = Math.max(alpha, score);
+                        if (beta <= alpha) break;
+                    }
+                }
+                return maxScore;
+            } else {
+                let minScore = Infinity;
+                for (let col = 0; col < COLS; col++) {
+                    const row = getLowestEmptyRow(col);
+                    if (row !== -1) {
+                        board[row][col] = PLAYER1;
+                        const score = minimax(board, depth - 1, alpha, beta, true);
+                        board[row][col] = 0;
+                        minScore = Math.min(score, minScore);
+                        beta = Math.min(beta, score);
+                        if (beta <= alpha) break;
+                    }
+                }
+                return minScore;
+            }
+        }
+
+        function evaluateBoard() {
+            let score = 0;
             
-            // Si no, movimiento aleatorio
-            const valid = getValidColumns();
-            return valid[Math.floor(Math.random() * valid.length)];
-        }
-        
-        if (aiLevel === "hard") {
-            return minimaxRoot(4, PLAYER2);
-        }
-        
-        // Fallback a movimiento aleatorio
-        const valid = getValidColumns();
-        return valid[Math.floor(Math.random() * valid.length)];
-    }
+            // Evaluate center column
+            const centerCol = Math.floor(COLS/2);
+            const centerCount = board.filter(row => row[centerCol] === PLAYER2).length;
+            score += centerCount * 3;
 
-    // ... [Resto del código minimax y funciones auxiliares permanecen igual]
-    function getAvailableRow(col) {
-        for (let row = ROWS - 1; row >= 0; row--) {
-            if (board[row][col] === 0) {
-                return row;
-            }
-        }
-        return null;
-    }
-
-    function getColFromEvent(e) {
-        const rect = canvas.getBoundingClientRect();
-        let x;
-        if (e.touches && e.touches[0]) {
-            x = e.touches[0].clientX - rect.left;
-        } else {
-            x = e.clientX - rect.left;
-        }
-        return Math.floor(x / cellSize);
-    }
-
-    function switchPlayer() {
-        currentPlayer = currentPlayer === PLAYER1 ? PLAYER2 : PLAYER1;
-    }
-
-    function getPlayerName(player) {
-        if (aiEnabled && player === PLAYER2) return "IA";
-        return player === PLAYER1 ? "Rojo" : "Amarillo";
-    }
-
-    function updateTurnIndicator() {
-        turnIndicator.textContent = getPlayerName(currentPlayer);
-        turnIndicator.style.color = COLORS[currentPlayer];
-    }
-
-    function showMessage(msg) {
-        message.textContent = msg;
-    }
-
-    function checkWin(row, col, player) {
-        // Check horizontal
-        let count = 0;
-        for (let c = Math.max(0, col - 3); c <= Math.min(COLS - 1, col + 3); c++) {
-            if (board[row][c] === player) {
-                count++;
-                if (count >= 4) return true;
-            } else {
-                count = 0;
-            }
-        }
-
-        // Check vertical
-        count = 0;
-        for (let r = Math.max(0, row - 3); r <= Math.min(ROWS - 1, row + 3); r++) {
-            if (board[r][col] === player) {
-                count++;
-                if (count >= 4) return true;
-            } else {
-                count = 0;
-            }
-        }
-
-        // Check diagonal (top-left to bottom-right)
-        count = 0;
-        let startRow = row - Math.min(row, col);
-        let startCol = col - Math.min(row, col);
-        for (let i = 0; startRow + i < ROWS && startCol + i < COLS; i++) {
-            if (board[startRow + i][startCol + i] === player) {
-                count++;
-                if (count >= 4) return true;
-            } else {
-                count = 0;
-            }
-        }
-
-        // Check diagonal (top-right to bottom-left)
-        count = 0;
-        startRow = row - Math.min(row, COLS - 1 - col);
-        startCol = col + Math.min(row, COLS - 1 - col);
-        for (let i = 0; startRow + i < ROWS && startCol - i >= 0; i++) {
-            if (board[startRow + i][startCol - i] === player) {
-                count++;
-                if (count >= 4) return true;
-            } else {
-                count = 0;
-            }
-        }
-
-        return false;
-    }
-
-    function isBoardFull() {
-        for (let row = 0; row < ROWS; row++) {
-            for (let col = 0; col < COLS; col++) {
-                if (board[row][col] === 0) {
-                    return false;
+            // Evaluate horizontal windows
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS-3; col++) {
+                    score += evaluateWindow(
+                        [board[row][col], board[row][col+1], 
+                         board[row][col+2], board[row][col+3]]
+                    );
                 }
             }
-        }
-        return true;
-    }
 
-    function getValidColumns() {
-        let validColumns = [];
-        for (let col = 0; col < COLS; col++) {
-            if (getAvailableRow(col) !== null) {
-                validColumns.push(col);
-            }
-        }
-        return validColumns;
-    }
-
-    function findWinningMove(player) {
-        for (let col = 0; col < COLS; col++) {
-            let row = getAvailableRow(col);
-            if (row !== null) {
-                board[row][col] = player;
-                if (checkWin(row, col, player)) {
-                    board[row][col] = 0; // Reset the board
-                    return col;
+            // Evaluate vertical windows
+            for (let row = 0; row < ROWS-3; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    score += evaluateWindow(
+                        [board[row][col], board[row+1][col],
+                         board[row+2][col], board[row+3][col]]
+                    );
                 }
-                board[row][col] = 0; // Reset the board
             }
-        }
-        return null;
-    }
-    function evaluateWindow(window, player) {
-        let score = 0;
-        let opponent = (player === PLAYER1) ? PLAYER2 : PLAYER1;
 
-        let playerCount = window.filter(x => x === player).length;
-        let emptyCount = window.filter(x => x === 0).length;
-        let opponentCount = window.filter(x => x === opponent).length;
+            // Evaluate diagonal windows
+            for (let row = 0; row < ROWS-3; row++) {
+                for (let col = 0; col < COLS-3; col++) {
+                    // Diagonal \
+                    score += evaluateWindow(
+                        [board[row][col], board[row+1][col+1],
+                         board[row+2][col+2], board[row+3][col+3]]
+                    );
+                    // Diagonal /
+                    score += evaluateWindow(
+                        [board[row][col+3], board[row+1][col+2],
+                         board[row+2][col+1], board[row+3][col]]
+                    );
+                }
+            }
 
-        if (playerCount === 4) {
-            score += 100;
-        } else if (playerCount === 3 && emptyCount === 1) {
-            score += 5;
-        } else if (playerCount === 2 && emptyCount === 2) {
-            score += 2;
-        }
-
-        if (opponentCount === 3 && emptyCount === 1) {
-            score -= 4;
+            return score;
         }
 
-        return score;
-    }
+        function evaluateWindow(window) {
+            const aiCount = window.filter(cell => cell === PLAYER2).length;
+            const playerCount = window.filter(cell => cell === PLAYER1).length;
+            const emptyCount = window.filter(cell => cell === 0).length;
 
-    function scorePosition(board, player) {
-        let score = 0;
-
-        // Score center column
-        let centerArray = [];
-        for (let i = 0; i < ROWS; i++) {
-            centerArray.push(board[i][COLS / 2]);
-        }
-        let centerCount = centerArray.filter(x => x === player).length;
-        score += centerCount * 3;
-
-        // Score Horizontal
-        for (let r = 0; r < ROWS; r++) {
-            let rowArray = [];
-            for (let i = 0; i < COLS; i++) {
-                rowArray.push(board[r][i]);
-            }
-            for (let c = 0; c < COLS - 3; c++) {
-                let window = rowArray.slice(c, c + 4);
-                score += evaluateWindow(window, player);
-            }
+            if (aiCount === 4) return 100;
+            if (playerCount === 4) return -100;
+            if (aiCount === 3 && emptyCount === 1) return 5;
+            if (playerCount === 3 && emptyCount === 1) return -4;
+            if (aiCount === 2 && emptyCount === 2) return 2;
+            if (playerCount === 2 && emptyCount === 2) return -1;
+            return 0;
         }
 
-        // Score Vertical
-        for (let c = 0; c < COLS; c++) {
-            let colArray = [];
-            for (let i = 0; i < ROWS; i++) {
-                colArray.push(board[i][c]);
-            }
-            for (let r = 0; r < ROWS - 3; r++) {
-                let window = colArray.slice(r, r + 4);
-                score += evaluateWindow(window, player);
-            }
-   
+        // Event Listeners
+        modeSelect.addEventListener('change', (e) => {
+            aiEnabled = e.target.value === 'ai';
+            aiLevelSelect.style.display = aiEnabled ? 'inline-block' : 'none';
+            initGame();
+        });
+
+        restartBtn.addEventListener('click', initGame);
+
+        // Initialize the game
+        initGame();
+    </script>
+</body>
+</html>
