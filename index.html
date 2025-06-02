@@ -178,8 +178,8 @@
     <script>
         const ROWS = 6;
         const COLS = 7;
-        const PLAYER1 = 1;
-        const PLAYER2 = 2;
+        const PLAYER1 = 1; // Humano
+        const PLAYER2 = 2; // IA
 
         let board = [];
         let currentPlayer = PLAYER1;
@@ -200,6 +200,10 @@
             createBoard();
             updateTurnIndicator();
             message.textContent = '';
+            // Si la IA está habilitada y es su turno al inicio (poco probable pero posible si se reinicia a mitad de un turno de la IA)
+            if (aiEnabled && currentPlayer === PLAYER2) {
+                setTimeout(makeAIMove, 500);
+            }
         }
 
         function createBoard() {
@@ -233,18 +237,21 @@
             if (gameOver || (aiEnabled && currentPlayer === PLAYER2)) return;
 
             const row = getLowestEmptyRow(col);
-            if (row === -1) return;
+            if (row === -1) {
+                //alert('Columna llena. Elige otra.'); // Opcional: mostrar un mensaje al usuario
+                return;
+            }
 
             board[row][col] = currentPlayer;
             updateBoardDisplay();
 
-            if (checkWin(row, col)) {
+            if (checkWin(board, row, col, currentPlayer)) { // Pasar el tablero y el jugador actual
                 gameOver = true;
                 message.textContent = `¡${getPlayerName(currentPlayer)} gana!`;
                 return;
             }
 
-            if (isBoardFull()) {
+            if (isBoardFull(board)) { // Pasar el tablero
                 gameOver = true;
                 message.textContent = '¡Empate!';
                 return;
@@ -258,38 +265,46 @@
             }
         }
 
-        function getLowestEmptyRow(col) {
+        function getLowestEmptyRow(col, currentBoard = board) {
             for (let row = ROWS - 1; row >= 0; row--) {
-                if (board[row][col] === 0) return row;
+                if (currentBoard[row][col] === 0) return row;
             }
             return -1;
         }
 
-        function checkWin(row, col) {
+        // Se modificó para aceptar el tablero y el jugador como argumentos
+        function checkWin(currentBoard, row, col, player) {
             const dirs = [
-                [[0,1], [0,-1]],   // horizontal
-                [[1,0], [-1,0]],   // vertical
-                [[1,1], [-1,-1]],  // diagonal \
-                [[1,-1], [-1,1]]   // diagonal /
+                [[0,1], [0,-1]],    // horizontal
+                [[1,0], [-1,0]],    // vertical
+                [[1,1], [-1,-1]],   // diagonal \
+                [[1,-1], [-1,1]]    // diagonal /
             ];
 
             return dirs.some(dir => {
                 let count = 1;
-                dir.forEach(([dx, dy]) => {
-                    let x = col + dx;
-                    let y = row + dy;
-                    while (y >= 0 && y < ROWS && x >= 0 && x < COLS && board[y][x] === currentPlayer) {
-                        count++;
-                        x += dx;
-                        y += dy;
-                    }
-                });
+                // Busca en una dirección
+                let x = col + dir[0][1];
+                let y = row + dir[0][0];
+                while (y >= 0 && y < ROWS && x >= 0 && x < COLS && currentBoard[y][x] === player) {
+                    count++;
+                    x += dir[0][1];
+                    y += dir[0][0];
+                }
+                // Busca en la dirección opuesta
+                x = col + dir[1][1];
+                y = row + dir[1][0];
+                while (y >= 0 && y < ROWS && x >= 0 && x < COLS && currentBoard[y][x] === player) {
+                    count++;
+                    x += dir[1][1];
+                    y += dir[1][0];
+                }
                 return count >= 4;
             });
         }
 
-        function isBoardFull() {
-            return board[0].every(cell => cell !== 0);
+        function isBoardFull(currentBoard = board) {
+            return currentBoard[0].every(cell => cell !== 0);
         }
 
         function getPlayerName(player) {
@@ -310,7 +325,7 @@
                 col = getRandomValidMove();
             } else if (level === 'medium') {
                 col = getMediumAIMove();
-            } else {
+            } else { // Hard (Minimax)
                 col = getHardAIMove();
             }
 
@@ -322,49 +337,69 @@
             for (let col = 0; col < COLS; col++) {
                 if (getLowestEmptyRow(col) !== -1) validMoves.push(col);
             }
-            return validMoves[Math.floor(Math.random() * validMoves.length)];
+            if (validMoves.length > 0) {
+                return validMoves[Math.floor(Math.random() * validMoves.length)];
+            }
+            return null; // No hay movimientos válidos
         }
 
         function getMediumAIMove() {
-            // First try to win
+            // 1. Intenta ganar
             for (let col = 0; col < COLS; col++) {
                 const row = getLowestEmptyRow(col);
                 if (row !== -1) {
                     board[row][col] = PLAYER2;
-                    if (checkWin(row, col)) {
-                        board[row][col] = 0;
+                    if (checkWin(board, row, col, PLAYER2)) {
+                        board[row][col] = 0; // Deshacer el movimiento
                         return col;
                     }
-                    board[row][col] = 0;
+                    board[row][col] = 0; // Deshacer el movimiento
                 }
             }
 
-            // Then try to block opponent
+            // 2. Intenta bloquear al oponente
             for (let col = 0; col < COLS; col++) {
                 const row = getLowestEmptyRow(col);
                 if (row !== -1) {
                     board[row][col] = PLAYER1;
-                    if (checkWin(row, col)) {
-                        board[row][col] = 0;
+                    if (checkWin(board, row, col, PLAYER1)) {
+                        board[row][col] = 0; // Deshacer el movimiento
                         return col;
                     }
-                    board[row][col] = 0;
+                    board[row][col] = 0; // Deshacer el movimiento
                 }
             }
-
+            
+            // 3. Si no hay jugada ganadora o de bloqueo, elige una columna central o aleatoria
+            const centerCol = Math.floor(COLS / 2);
+            if (getLowestEmptyRow(centerCol) !== -1) {
+                return centerCol;
+            }
+            
             return getRandomValidMove();
         }
 
         function getHardAIMove() {
             let bestScore = -Infinity;
             let bestMove = null;
+            const validMoves = [];
 
+            // Recopilar movimientos válidos para iterar de manera eficiente
             for (let col = 0; col < COLS; col++) {
+                if (getLowestEmptyRow(col) !== -1) {
+                    validMoves.push(col);
+                }
+            }
+
+            // Shuffle valid moves to add some randomness for equally good moves
+            validMoves.sort(() => Math.random() - 0.5); 
+
+            for (const col of validMoves) {
                 const row = getLowestEmptyRow(col);
                 if (row !== -1) {
-                    board[row][col] = PLAYER2;
-                    const score = minimax(board, 4, -Infinity, Infinity, false);
-                    board[row][col] = 0;
+                    board[row][col] = PLAYER2; // La IA es PLAYER2
+                    const score = minimax(board, 5, -Infinity, Infinity, false); // Aumentar la profundidad a 5 o más
+                    board[row][col] = 0; // Deshacer el movimiento
 
                     if (score > bestScore) {
                         bestScore = score;
@@ -372,104 +407,145 @@
                     }
                 }
             }
-
             return bestMove;
         }
 
-        function minimax(board, depth, alpha, beta, isMaximizing) {
-            if (depth === 0) return evaluateBoard();
+        // Minimax con Poda Alpha-Beta
+        function minimax(currentBoard, depth, alpha, beta, isMaximizingPlayer) {
+            // Check for terminal states (win/loss/draw)
+            // It's important to check this *before* evaluating depth 0, 
+            // as a win/loss at higher depth is more important than a heuristic score.
+            // Check for win for PLAYER2 (Maximizing Player)
+            for (let col = 0; col < COLS; col++) {
+                const row = getLowestEmptyRow(col, currentBoard); // Get row where the last piece would fall
+                if (row !== -1) { // If column is not full
+                    // Check if PLAYER2 (AI) could have won with the previous move (hypothetical)
+                    currentBoard[row][col] = PLAYER2;
+                    if (checkWin(currentBoard, row, col, PLAYER2)) {
+                        currentBoard[row][col] = 0; // Undo the move
+                        return 100000000; // Very high score for AI win
+                    }
+                    currentBoard[row][col] = 0; // Undo the move
+                    
+                    // Check if PLAYER1 (Human) could have won with the previous move (hypothetical)
+                    currentBoard[row][col] = PLAYER1;
+                    if (checkWin(currentBoard, row, col, PLAYER1)) {
+                        currentBoard[row][col] = 0; // Undo the move
+                        return -100000000; // Very low score for human win (AI loss)
+                    }
+                    currentBoard[row][col] = 0; // Undo the move
+                }
+            }
+
+            if (isBoardFull(currentBoard)) {
+                return 0; // Draw
+            }
+
+            if (depth === 0) {
+                return evaluateBoard(currentBoard);
+            }
             
-            if (isMaximizing) {
+            if (isMaximizingPlayer) {
                 let maxScore = -Infinity;
                 for (let col = 0; col < COLS; col++) {
-                    const row = getLowestEmptyRow(col);
+                    const row = getLowestEmptyRow(col, currentBoard);
                     if (row !== -1) {
-                        board[row][col] = PLAYER2;
-                        const score = minimax(board, depth - 1, alpha, beta, false);
-                        board[row][col] = 0;
+                        currentBoard[row][col] = PLAYER2; // AI's move
+                        const score = minimax(currentBoard, depth - 1, alpha, beta, false);
+                        currentBoard[row][col] = 0; // Undo the move
                         maxScore = Math.max(score, maxScore);
                         alpha = Math.max(alpha, score);
-                        if (beta <= alpha) break;
+                        if (beta <= alpha) break; // Alpha-beta pruning
                     }
                 }
                 return maxScore;
-            } else {
+            } else { // Minimizing player (Human)
                 let minScore = Infinity;
                 for (let col = 0; col < COLS; col++) {
-                    const row = getLowestEmptyRow(col);
+                    const row = getLowestEmptyRow(col, currentBoard);
                     if (row !== -1) {
-                        board[row][col] = PLAYER1;
-                        const score = minimax(board, depth - 1, alpha, beta, true);
-                        board[row][col] = 0;
+                        currentBoard[row][col] = PLAYER1; // Human's move
+                        const score = minimax(currentBoard, depth - 1, alpha, beta, true);
+                        currentBoard[row][col] = 0; // Undo the move
                         minScore = Math.min(score, minScore);
                         beta = Math.min(beta, score);
-                        if (beta <= alpha) break;
+                        if (beta <= alpha) break; // Alpha-beta pruning
                     }
                 }
                 return minScore;
             }
         }
 
-        function evaluateBoard() {
+        // Función de evaluación de la tabla, toma un tablero como argumento
+        function evaluateBoard(currentBoard) {
             let score = 0;
             
-            // Evaluate center column
-            const centerCol = Math.floor(COLS/2);
-            const centerCount = board.filter(row => row[centerCol] === PLAYER2).length;
-            score += centerCount * 3;
-
-            // Evaluate horizontal windows
-            for (let row = 0; row < ROWS; row++) {
-                for (let col = 0; col < COLS-3; col++) {
-                    score += evaluateWindow(
-                        [board[row][col], board[row][col+1], 
-                         board[row][col+2], board[row][col+3]]
-                    );
+            // Prioriza el centro
+            for (let r = 0; r < ROWS; r++) {
+                if (currentBoard[r][Math.floor(COLS/2)] === PLAYER2) {
+                    score += 3;
                 }
             }
 
-            // Evaluate vertical windows
-            for (let row = 0; row < ROWS-3; row++) {
-                for (let col = 0; col < COLS; col++) {
-                    score += evaluateWindow(
-                        [board[row][col], board[row+1][col],
-                         board[row+2][col], board[row+3][col]]
-                    );
+            // Evaluar ventanas horizontales
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS - 3; c++) {
+                    const window = [currentBoard[r][c], currentBoard[r][c+1], currentBoard[r][c+2], currentBoard[r][c+3]];
+                    score += evaluateWindow(window, PLAYER2, PLAYER1);
                 }
             }
 
-            // Evaluate diagonal windows
-            for (let row = 0; row < ROWS-3; row++) {
-                for (let col = 0; col < COLS-3; col++) {
-                    // Diagonal \
-                    score += evaluateWindow(
-                        [board[row][col], board[row+1][col+1],
-                         board[row+2][col+2], board[row+3][col+3]]
-                    );
-                    // Diagonal /
-                    score += evaluateWindow(
-                        [board[row][col+3], board[row+1][col+2],
-                         board[row+2][col+1], board[row+3][col]]
-                    );
+            // Evaluar ventanas verticales
+            for (let c = 0; c < COLS; c++) {
+                for (let r = 0; r < ROWS - 3; r++) {
+                    const window = [currentBoard[r][c], currentBoard[r+1][c], currentBoard[r+2][c], currentBoard[r+3][c]];
+                    score += evaluateWindow(window, PLAYER2, PLAYER1);
                 }
             }
 
+            // Evaluar ventanas diagonales (positivas)
+            for (let r = 0; r < ROWS - 3; r++) {
+                for (let c = 0; c < COLS - 3; c++) {
+                    const window = [currentBoard[r][c], currentBoard[r+1][c+1], currentBoard[r+2][c+2], currentBoard[r+3][c+3]];
+                    score += evaluateWindow(window, PLAYER2, PLAYER1);
+                }
+            }
+
+            // Evaluar ventanas diagonales (negativas)
+            for (let r = 0; r < ROWS - 3; r++) {
+                for (let c = 3; c < COLS; c++) {
+                    const window = [currentBoard[r][c], currentBoard[r+1][c-1], currentBoard[r+2][c-2], currentBoard[r+3][c-3]];
+                    score += evaluateWindow(window, PLAYER2, PLAYER1);
+                }
+            }
             return score;
         }
 
-        function evaluateWindow(window) {
-            const aiCount = window.filter(cell => cell === PLAYER2).length;
-            const playerCount = window.filter(cell => cell === PLAYER1).length;
+        // Se modificó para ser más genérica y aceptar el jugador de la IA y el oponente
+        function evaluateWindow(window, aiPlayer, opponentPlayer) {
+            let score = 0;
+            const aiCount = window.filter(cell => cell === aiPlayer).length;
+            const opponentCount = window.filter(cell => cell === opponentPlayer).length;
             const emptyCount = window.filter(cell => cell === 0).length;
 
-            if (aiCount === 4) return 100;
-            if (playerCount === 4) return -100;
-            if (aiCount === 3 && emptyCount === 1) return 5;
-            if (playerCount === 3 && emptyCount === 1) return -4;
-            if (aiCount === 2 && emptyCount === 2) return 2;
-            if (playerCount === 2 && emptyCount === 2) return -1;
-            return 0;
+            if (aiCount === 4) {
+                score += 100; // La IA gana
+            } else if (aiCount === 3 && emptyCount === 1) {
+                score += 10; // Tres en raya para la IA con una casilla vacía
+            } else if (aiCount === 2 && emptyCount === 2) {
+                score += 2; // Dos en raya para la IA con dos casillas vacías
+            }
+
+            if (opponentCount === 4) {
+                score -= 90; // El oponente gana (gran penalización)
+            } else if (opponentCount === 3 && emptyCount === 1) {
+                score -= 8; // Tres en raya para el oponente con una casilla vacía (la IA debe bloquear)
+            } else if (opponentCount === 2 && emptyCount === 2) {
+                score -= 1; // Dos en raya para el oponente (menor penalización)
+            }
+            return score;
         }
+
 
         // Event Listeners
         modeSelect.addEventListener('change', (e) => {
