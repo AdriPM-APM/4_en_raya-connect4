@@ -1,201 +1,123 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>4 en Raya - AdriPM-APM (IA Pro)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <style>
-    :root {
-      --cell-size: min(12vw, 70px);
-      --board-color: #0077cc;
-      --player1-color: #ff595e;
-      --player2-color: #ffe066;
-    }
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: #333;
-      color: #f4f4f4;
-      margin: 0;
-      padding: 20px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .container {
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 24px;
-      background: #22223b;
-      border-radius: 12px;
-      box-shadow: 0 2px 24px rgba(0, 0, 0, 0.3);
-      text-align: center;
-    }
-    .controls {
-      margin: 20px 0;
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      flex-wrap: wrap;
-    }
-    button, select, input[type="text"], input[type="password"] {
-      padding: 8px 12px;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      font-family: inherit;
-    }
-    button { background: #eebbc3; color: #232946; cursor: pointer; }
-    select { background: #2f2f4d; color: #f4f4f4; cursor: pointer; }
-    input[type="text"], input[type="password"] {
-      background: #2f2f4d;
-      color: #f4f4f4;
-      border: 1px solid #3a3a5c;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    input[type="text"]:focus, input[type="password"]:focus {
-      outline: none;
-      border-color: #eebbc3;
-    }
+<meta charset="UTF-8" />
+<title>4 en Raya · IA Pro (debug)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+  :root {
+    --cell-size: min(12vw, 70px);
+    --board-color: #0077cc;
+    --player1-color: #ff595e;
+    --player2-color: #ffe066;
+  }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #333; color: #f4f4f4; margin: 0; padding: 20px;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+  }
+  .container {
+    max-width: 960px; margin: 20px auto; padding: 24px;
+    background: #22223b; border-radius: 12px;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.3); text-align: center;
+  }
+  .controls { margin: 20px 0; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+  button, select, input {
+    padding: 8px 12px; border: none; border-radius: 6px;
+    font-size: 1rem; font-family: inherit;
+  }
+  button { background: #eebbc3; color: #232946; cursor: pointer; }
+  select { background: #2f2f4d; color: #f4f4f4; cursor: pointer; }
+  input { background: #2f2f4d; color: #f4f4f4; border: 1px solid #3a3a5c; width: 100%; box-sizing: border-box; }
+  input:focus { outline: none; border-color: #eebbc3; }
 
-    .api-config {
-      margin: 15px 0;
-      background: #1a1a30;
-      border-radius: 8px;
-      padding: 0;
-      text-align: left;
-    }
-    .api-config > summary {
-      padding: 12px 16px;
-      cursor: pointer;
-      font-weight: bold;
-      color: #eebbc3;
-      user-select: none;
-      list-style: none;
-    }
-    .api-config > summary::-webkit-details-marker { display: none; }
-    .api-config > summary::before {
-      content: '▶ ';
-      display: inline-block;
-      transition: transform 0.2s;
-      font-size: 0.8em;
-    }
-    .api-config[open] > summary::before { transform: rotate(90deg); }
+  /* Config */
+  details.cfg {
+    margin: 15px 0; background: #1a1a30; border-radius: 8px;
+    text-align: left; padding: 0;
+  }
+  details.cfg > summary {
+    padding: 12px 16px; cursor: pointer; font-weight: bold;
+    color: #eebbc3; user-select: none; list-style: none;
+  }
+  details.cfg > summary::-webkit-details-marker { display: none; }
+  details.cfg > summary::before {
+    content: '▶ '; display: inline-block; transition: transform 0.2s; font-size: 0.8em;
+  }
+  details.cfg[open] > summary::before { transform: rotate(90deg); }
+  .warning {
+    margin: 0 16px 12px; padding: 10px 14px; background: #3d2020;
+    border-left: 4px solid #ff595e; border-radius: 4px;
+    font-size: 0.85rem; color: #ffb3b3; line-height: 1.4;
+  }
+  .provider { padding: 12px 16px; border-top: 1px solid #2f2f4d; }
+  .provider h3 { margin: 0 0 10px; font-size: 1rem; color: #ffe066; display: flex; align-items: center; gap: 10px; }
+  .provider label { display: block; margin-bottom: 6px; font-size: 0.82rem; color: #b8b8d1; }
+  .provider input { margin-top: 3px; font-size: 0.9rem; }
+  .test-btn { padding: 3px 10px; font-size: 0.75rem; background: #4a4a6a; color: #f4f4f4; }
+  .test-btn:hover { background: #5a5a7a; }
 
-    .api-warning {
-      margin: 0 16px 12px;
-      padding: 10px 14px;
-      background: #3d2020;
-      border-left: 4px solid #ff595e;
-      border-radius: 4px;
-      font-size: 0.85rem;
-      color: #ffb3b3;
-      line-height: 1.4;
-    }
-    .provider-config {
-      padding: 12px 16px;
-      border-top: 1px solid #2f2f4d;
-    }
-    .provider-config h3 {
-      margin: 0 0 10px;
-      font-size: 1rem;
-      color: #ffe066;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .provider-config label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 0.85rem;
-      color: #b8b8d1;
-    }
-    .provider-config .row { display: flex; gap: 8px; margin-top: 4px; }
-    .provider-config .row input { flex: 1; }
-    .test-btn {
-      padding: 4px 10px;
-      font-size: 0.75rem;
-      background: #4a4a6a;
-      color: #f4f4f4;
-    }
-    .test-btn:hover { background: #5a5a7a; }
-    .ai-status {
-      min-height: 20px;
-      margin: 8px 16px 16px;
-      font-size: 0.85rem;
-      color: #b8b8d1;
-    }
-    .ai-status.success { color: #6ee7a7; }
-    .ai-status.error   { color: #ff8080; }
-    .ai-status.pending { color: #ffe066; }
+  /* Board */
+  .board {
+    background: var(--board-color); padding: 10px; border-radius: 10px;
+    display: inline-grid; grid-template-columns: repeat(7, var(--cell-size));
+    grid-template-rows: repeat(6, var(--cell-size)); gap: 5px;
+    margin: 20px auto; position: relative;
+  }
+  .cell {
+    background: white; border-radius: 50%; width: 100%; height: 100%;
+    position: relative; cursor: pointer; transition: background-color 0.3s ease;
+  }
+  .cell::before {
+    content: ''; position: absolute; width: 90%; height: 90%;
+    border-radius: 50%; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    transition: background-color 0.3s ease;
+  }
+  .cell.p1::before { background: var(--player1-color); box-shadow: inset -4px -4px 8px rgba(0,0,0,0.2); }
+  .cell.p2::before { background: var(--player2-color); box-shadow: inset -4px -4px 8px rgba(0,0,0,0.2); }
+  .cell:hover { background: #f0f0f0; }
+  .cell.hint { box-shadow: 0 0 0 3px #ffe066 inset; }
 
-    .board {
-      background: var(--board-color);
-      padding: 10px;
-      border-radius: 10px;
-      display: inline-grid;
-      grid-template-columns: repeat(7, var(--cell-size));
-      grid-template-rows: repeat(6, var(--cell-size));
-      gap: 5px;
-      margin: 20px auto;
-      position: relative;
-    }
-    .cell {
-      background: white;
-      border-radius: 50%;
-      width: 100%;
-      height: 100%;
-      position: relative;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-    .cell::before {
-      content: '';
-      position: absolute;
-      width: 90%;
-      height: 90%;
-      border-radius: 50%;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      transition: background-color 0.3s ease;
-    }
-    .cell.player1::before {
-      background: var(--player1-color);
-      box-shadow: inset -4px -4px 8px rgba(0, 0, 0, 0.2);
-    }
-    .cell.player2::before {
-      background: var(--player2-color);
-      box-shadow: inset -4px -4px 8px rgba(0, 0, 0, 0.2);
-    }
-    .cell:hover { background: #f0f0f0; }
+  .floater {
+    position: absolute; border-radius: 50%; pointer-events: none;
+    z-index: 10; will-change: transform; --fall: -1000px;
+    animation: dropBounce 0.38s forwards;
+  }
+  @keyframes dropBounce {
+    0%   { transform: translateY(var(--fall)); animation-timing-function: cubic-bezier(0.55,0,0.95,0.45); }
+    72%  { transform: translateY(0); animation-timing-function: cubic-bezier(0.33,1,0.68,1); }
+    86%  { transform: translateY(-6px); animation-timing-function: cubic-bezier(0.5,0,0.9,0.5); }
+    100% { transform: translateY(0); }
+  }
 
-    .floater {
-      position: absolute;
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 10;
-      will-change: transform;
-      --fall: -1000px;
-      animation: dropBounce 0.38s forwards;
-    }
-    @keyframes dropBounce {
-      0%   { transform: translateY(var(--fall)); animation-timing-function: cubic-bezier(0.55, 0, 0.95, 0.45); }
-      72%  { transform: translateY(0); animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1); }
-      86%  { transform: translateY(-6px); animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.5); }
-      100% { transform: translateY(0); }
-    }
+  #turnIndicator { font-size: 1.15rem; margin: 12px 0; }
+  #message { min-height: 24px; font-size: 1.1rem; color: #eebbc3; margin: 10px 0; }
 
-    #turnIndicator { font-size: 1.2rem; margin: 15px 0; }
-    #message { min-height: 24px; font-size: 1.15rem; color: #eebbc3; margin-top: 15px; }
-    @media (max-width: 600px) {
-      :root { --cell-size: 45px; }
-      .container { padding: 15px; margin: 10px; }
-      .controls { flex-direction: column; }
-      .provider-config .row { flex-direction: column; }
-    }
-  </style>
+  /* Debug */
+  details.debug {
+    margin-top: 18px; background: #11111f; border-radius: 8px;
+    text-align: left; padding: 0;
+  }
+  details.debug > summary {
+    padding: 10px 14px; cursor: pointer; color: #6ee7a7; font-weight: bold;
+    font-family: monospace; list-style: none;
+  }
+  details.debug > summary::-webkit-details-marker { display: none; }
+  #debugLog {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.78rem; line-height: 1.45;
+    color: #d4d4d4; background: #0a0a15;
+    margin: 0; padding: 12px; max-height: 340px; overflow-y: auto;
+    border-radius: 0 0 8px 8px; white-space: pre-wrap;
+  }
+
+  @media (max-width: 600px) {
+    :root { --cell-size: 45px; }
+    .container { padding: 15px; margin: 10px; }
+    .controls { flex-direction: column; }
+  }
+</style>
 </head>
 <body>
 
@@ -203,211 +125,182 @@
   <h1>4 en Raya · IA Pro</h1>
 
   <div class="controls">
-    <select id="modeSelect">
+    <select id="mode">
       <option value="local">2 Jugadores</option>
-      <option value="ai">Jugador vs IA (Local)</option>
-      <option value="ai-api">Jugador vs IA (API)</option>
+      <option value="ai" selected>Jugador vs IA (Local)</option>
+      <option value="api">Jugador vs IA (API)</option>
     </select>
-
-    <select id="aiLevel" style="display:none;">
+    <select id="level">
       <option value="medium">Medio</option>
       <option value="hard" selected>Difícil</option>
-      <option value="expert">Experto (Negamax)</option>
+      <option value="expert">Experto</option>
     </select>
-
-    <select id="apiProvider" style="display:none;">
+    <select id="provider" style="display:none">
       <option value="openrouter">OpenRouter</option>
       <option value="gemini">Gemini</option>
       <option value="openai">OpenAI</option>
     </select>
-
-    <button id="restartBtn">Reiniciar Juego</button>
+    <button id="restart">Reiniciar</button>
   </div>
 
-  <details class="api-config" id="apiConfigPanel">
-    <summary>⚙️ Configuración de APIs (claves guardadas solo en tu navegador)</summary>
+  <details class="cfg" id="cfgPanel">
+    <summary>⚙️ Configuración de APIs (localStorage)</summary>
+    <p class="warning">⚠️ Claves visibles en DevTools. No uses en hosting público. Revoca si sospechas filtrado.</p>
 
-    <p class="api-warning">
-      ⚠️ <strong>Aviso de seguridad:</strong> las API keys se guardan en
-      <code>localStorage</code> de este navegador y son visibles en DevTools.
-      No uses este archivo en un hosting público con tus claves dentro, ni lo
-      compartas sin vaciar los campos. Revoca las claves si sospechas que se
-      han filtrado.
-    </p>
-
-    <div class="provider-config" data-provider="openrouter">
-      <h3>OpenRouter <button class="test-btn" data-provider="openrouter">Probar</button></h3>
-      <label>API Key
-        <div class="row"><input type="password" id="openrouter-key" placeholder="sk-or-v1-..." autocomplete="off" spellcheck="false" /></div>
-      </label>
-      <label>Modelo
-        <div class="row">
-          <input type="text" id="openrouter-model" list="openrouter-models" placeholder="openai/gpt-4o-mini" spellcheck="false" />
-          <datalist id="openrouter-models">
-            <option value="openai/gpt-4o-mini"></option>
-            <option value="openai/gpt-4o"></option>
-            <option value="anthropic/claude-3.5-sonnet"></option>
-            <option value="google/gemini-flash-1.5"></option>
-            <option value="meta-llama/llama-3.1-70b-instruct"></option>
-            <option value="mistralai/mistral-large"></option>
-          </datalist>
-        </div>
-      </label>
+    <div class="provider">
+      <h3>OpenRouter <button class="test-btn" data-p="openrouter">Probar</button></h3>
+      <label>API Key<input type="password" id="openrouter-key" placeholder="sk-or-v1-..." autocomplete="off" /></label>
+      <label>Modelo<input type="text" id="openrouter-model" list="or-m" placeholder="openai/gpt-4o-mini" /></label>
+      <datalist id="or-m">
+        <option value="openai/gpt-4o-mini"></option>
+        <option value="openai/gpt-4o"></option>
+        <option value="anthropic/claude-3.5-sonnet"></option>
+        <option value="google/gemini-flash-1.5"></option>
+      </datalist>
+      <label>URL<input type="text" id="openrouter-url" placeholder="https://openrouter.ai/api/v1/chat/completions" /></label>
     </div>
 
-    <div class="provider-config" data-provider="gemini">
-      <h3>Google Gemini <button class="test-btn" data-provider="gemini">Probar</button></h3>
-      <label>API Key
-        <div class="row"><input type="password" id="gemini-key" placeholder="AIza..." autocomplete="off" spellcheck="false" /></div>
-      </label>
-      <label>Modelo
-        <div class="row">
-          <input type="text" id="gemini-model" list="gemini-models" placeholder="gemini-2.0-flash" spellcheck="false" />
-          <datalist id="gemini-models">
-            <option value="gemini-2.0-flash"></option>
-            <option value="gemini-1.5-flash"></option>
-            <option value="gemini-1.5-pro"></option>
-            <option value="gemini-2.5-flash"></option>
-            <option value="gemini-2.5-pro"></option>
-          </datalist>
-        </div>
-      </label>
+    <div class="provider">
+      <h3>Gemini <button class="test-btn" data-p="gemini">Probar</button></h3>
+      <label>API Key<input type="password" id="gemini-key" placeholder="AIza..." autocomplete="off" /></label>
+      <label>Modelo<input type="text" id="gemini-model" list="gm" placeholder="gemini-2.0-flash" /></label>
+      <datalist id="gm">
+        <option value="gemini-2.0-flash"></option>
+        <option value="gemini-1.5-flash"></option>
+        <option value="gemini-1.5-pro"></option>
+      </datalist>
+      <label>URL base<input type="text" id="gemini-url" placeholder="https://generativelanguage.googleapis.com/v1beta" /></label>
     </div>
 
-    <div class="provider-config" data-provider="openai">
-      <h3>OpenAI <button class="test-btn" data-provider="openai">Probar</button></h3>
-      <label>API Key
-        <div class="row"><input type="password" id="openai-key" placeholder="sk-..." autocomplete="off" spellcheck="false" /></div>
-      </label>
-      <label>Modelo
-        <div class="row">
-          <input type="text" id="openai-model" list="openai-models" placeholder="gpt-4o-mini" spellcheck="false" />
-          <datalist id="openai-models">
-            <option value="gpt-4o-mini"></option>
-            <option value="gpt-4o"></option>
-            <option value="gpt-3.5-turbo"></option>
-            <option value="gpt-4.1-mini"></option>
-            <option value="gpt-4.1"></option>
-          </datalist>
-        </div>
-      </label>
+    <div class="provider">
+      <h3>OpenAI <button class="test-btn" data-p="openai">Probar</button></h3>
+      <label>API Key<input type="password" id="openai-key" placeholder="sk-..." autocomplete="off" /></label>
+      <label>Modelo<input type="text" id="openai-model" list="oa-m" placeholder="gpt-4o-mini" /></label>
+      <datalist id="oa-m">
+        <option value="gpt-4o-mini"></option>
+        <option value="gpt-4o"></option>
+        <option value="gpt-4.1-mini"></option>
+      </datalist>
+      <label>URL<input type="text" id="openai-url" placeholder="https://api.openai.com/v1/chat/completions" /></label>
     </div>
-
-    <div class="ai-status" id="aiStatus"></div>
   </details>
 
   <div id="turnIndicator">Turno: <span style="color: var(--player1-color)">Rojo</span></div>
   <div class="board" id="board"></div>
   <div id="message"></div>
+
+  <details class="debug" open>
+    <summary>🐛 Debug / Log (más reciente arriba)</summary>
+    <pre id="debugLog"></pre>
+  </details>
 </div>
 
 <script>
-// ==================== ESTADO ====================
-const ROWS = 6;
-const COLS = 7;
-const PLAYER1 = 1;
-const PLAYER2 = 2;
-const EMPTY = 0;
-const STORAGE_KEY = 'connect4-api-config-v1';
+// ============ CONSTANTES ============
+const ROWS = 6, COLS = 7;
+const P1 = 1, P2 = 2, EMPTY = 0;
+const STORAGE = 'c4-config-v2';
+const COL_ORDER = [3, 2, 4, 1, 5, 0, 6];
+const DEFAULT_URLS = {
+  openrouter: 'https://openrouter.ai/api/v1/chat/completions',
+  gemini:     'https://generativelanguage.googleapis.com/v1beta',
+  openai:     'https://api.openai.com/v1/chat/completions'
+};
 
-let board = [];
-let currentPlayer = PLAYER1;
-let gameOver = false;
-let aiEnabled = false;
-let useExternalAPI = false;
-let isAnimating = false;
+// ============ ESTADO ============
+let board, currentPlayer, gameOver, aiEnabled, useAPI, isAnimating, aiBusy;
+let transpositions = new Map();
 
-const boardElement = document.getElementById('board');
-const turnIndicator = document.getElementById('turnIndicator');
-const messageEl = document.getElementById('message');
-const modeSelect = document.getElementById('modeSelect');
-const aiLevelSelect = document.getElementById('aiLevel');
-const apiProviderSelect = document.getElementById('apiProvider');
-const restartBtn = document.getElementById('restartBtn');
-const aiStatusEl = document.getElementById('aiStatus');
+const $ = id => document.getElementById(id);
+const boardEl = $('board'), turnEl = $('turnIndicator'), msgEl = $('message');
+const modeSel = $('mode'), levelSel = $('level'), providerSel = $('provider');
+const debugEl = $('debugLog');
 
-const transpositionTable = new Map();
-const COL_ORDER = [3, 2, 4, 1, 5, 0, 6]; // centro primero → mejor poda alfa-beta
+// ============ LOG ============
+function log(text) {
+  const time = new Date().toLocaleTimeString('es-ES');
+  debugEl.textContent = `[${time}] ${text}\n` + debugEl.textContent;
+  const lines = debugEl.textContent.split('\n');
+  if (lines.length > 80) debugEl.textContent = lines.slice(0, 80).join('\n');
+}
 
-// ==================== INICIALIZACIÓN ====================
+// ============ INIT ============
 function initGame() {
   board = Array.from({ length: ROWS }, () => Array(COLS).fill(EMPTY));
-  currentPlayer = PLAYER1;
+  currentPlayer = P1;
   gameOver = false;
   isAnimating = false;
-  transpositionTable.clear();
-  createBoard();
-  updateTurnIndicator();
-  messageEl.textContent = '';
+  aiBusy = false;
+  transpositions.clear();
+  createBoardDOM();
+  updateTurn();
+  msgEl.textContent = '';
+  log('── Nueva partida ──');
 }
 
-function createBoard() {
-  boardElement.innerHTML = '';
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
+function createBoardDOM() {
+  boardEl.innerHTML = '';
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
-      cell.dataset.col = col;
-      cell.dataset.row = row;
-      cell.addEventListener('click', () => makeMove(col, false));
-      boardElement.appendChild(cell);
+      cell.dataset.col = c;
+      cell.dataset.row = r;
+      cell.addEventListener('click', () => makeMove(c, false));
+      boardEl.appendChild(cell);
     }
   }
-  updateBoardDisplay();
+  renderBoard();
 }
 
-function updateBoardDisplay() {
-  const cells = boardElement.children;
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
-      const idx = row * COLS + col;
-      const cell = cells[idx];
+function renderBoard() {
+  const cells = boardEl.children;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const cell = cells[r * COLS + c];
       if (!cell || !cell.classList.contains('cell')) continue;
-      const val = board[row][col];
-      cell.className = 'cell' +
-        (val === PLAYER1 ? ' player1' : val === PLAYER2 ? ' player2' : '');
+      const v = board[r][c];
+      cell.className = 'cell' + (v === P1 ? ' p1' : v === P2 ? ' p2' : '');
     }
   }
 }
 
-// ==================== MOVIMIENTO + ANIMACIÓN ====================
-function makeMove(col, isAIMove = false) {
+// ============ MOVIMIENTO + ANIMACIÓN ============
+function makeMove(col, isAI = false) {
   if (gameOver || isAnimating) return;
-  if (!isAIMove && aiEnabled && currentPlayer === PLAYER2) return;
+  if (!isAI && aiBusy) return;
+  if (!isAI && aiEnabled && currentPlayer === P2) return;
   if (col < 0 || col >= COLS) return;
 
-  const row = getLowestEmptyRow(col);
+  const row = getLowestRow(col);
   if (row === -1) return;
 
   isAnimating = true;
   const player = currentPlayer;
 
-  const boardRect = boardElement.getBoundingClientRect();
-  const targetCell = boardElement.children[row * COLS + col];
-  const targetRect = targetCell.getBoundingClientRect();
+  const bRect = boardEl.getBoundingClientRect();
+  const tCell = boardEl.children[row * COLS + col];
+  const tRect = tCell.getBoundingClientRect();
 
-  const pieceSize = targetRect.width * 0.9;
-  const pieceOffset = targetRect.width * 0.05;
-  const endY = (targetRect.top - boardRect.top) + pieceOffset;
-  const endX = (targetRect.left - boardRect.left) + pieceOffset;
-  const startY = -(pieceSize + 15);
-  const fallDist = endY - startY;
+  const size = tRect.width * 0.9;
+  const off  = tRect.width * 0.05;
+  const endY = (tRect.top - bRect.top) + off;
+  const endX = (tRect.left - bRect.left) + off;
+  const fall = endY - (-(size + 15));
 
   const floater = document.createElement('div');
   floater.className = 'floater';
-  floater.style.width = pieceSize + 'px';
-  floater.style.height = pieceSize + 'px';
-  floater.style.left = endX + 'px';
-  floater.style.top = endY + 'px';
-  floater.style.background = player === PLAYER1 ? 'var(--player1-color)' : 'var(--player2-color)';
-  floater.style.boxShadow = 'inset -4px -4px 8px rgba(0,0,0,0.25)';
-  floater.style.setProperty('--fall', (-fallDist) + 'px');
-
-  boardElement.appendChild(floater);
+  floater.style.cssText = `
+    width:${size}px;height:${size}px;left:${endX}px;top:${endY}px;
+    background:${player === P1 ? 'var(--player1-color)' : 'var(--player2-color)'};
+    box-shadow:inset -4px -4px 8px rgba(0,0,0,0.25);
+  `;
+  floater.style.setProperty('--fall', (-fall) + 'px');
+  boardEl.appendChild(floater);
 
   floater.addEventListener('animationend', () => {
     board[row][col] = player;
-    updateBoardDisplay();
+    renderBoard();
     floater.remove();
     isAnimating = false;
     finalizeMove(row, col);
@@ -417,498 +310,432 @@ function makeMove(col, isAIMove = false) {
 function finalizeMove(row, col) {
   if (checkWin(row, col, board[row][col])) {
     gameOver = true;
-    messageEl.textContent = `¡${getPlayerName(board[row][col])} gana!`;
+    msgEl.textContent = `¡${playerName(board[row][col])} gana!`;
+    log(`Victoria: ${playerName(board[row][col])}`);
     return;
   }
   if (isBoardFull()) {
     gameOver = true;
-    messageEl.textContent = '¡Empate!';
+    msgEl.textContent = '¡Empate!';
+    log('Empate');
     return;
   }
-  currentPlayer = currentPlayer === PLAYER1 ? PLAYER2 : PLAYER1;
-  updateTurnIndicator();
-  if (aiEnabled && currentPlayer === PLAYER2 && !gameOver) {
-    makeAIMove(); // sin setTimeout: la IA arranca al instante
+  currentPlayer = currentPlayer === P1 ? P2 : P1;
+  updateTurn();
+  if (aiEnabled && currentPlayer === P2 && !gameOver) {
+    makeAIMove();
   }
 }
 
-// ==================== UTILIDADES ====================
-function getLowestEmptyRow(col) {
-  for (let row = ROWS - 1; row >= 0; row--) {
-    if (board[row][col] === EMPTY) return row;
-  }
+// ============ UTILS ============
+function getLowestRow(col, b = board) {
+  for (let r = ROWS - 1; r >= 0; r--) if (b[r][col] === EMPTY) return r;
   return -1;
 }
-function isBoardFull() { return board[0].every(c => c !== EMPTY); }
-function getPlayerName(p) {
-  if (aiEnabled && p === PLAYER2) return 'IA';
-  return p === PLAYER1 ? 'Rojo' : 'Amarillo';
+function isBoardFull() { return board[0].every(v => v !== EMPTY); }
+function playerName(p) {
+  if (aiEnabled && p === P2) return 'IA';
+  return p === P1 ? 'Rojo' : 'Amarillo';
 }
-function updateTurnIndicator() {
-  const color = currentPlayer === PLAYER1 ? 'var(--player1-color)' : 'var(--player2-color)';
-  turnIndicator.innerHTML = `Turno: <span style="color: ${color}">${getPlayerName(currentPlayer)}</span>`;
+function updateTurn() {
+  const color = currentPlayer === P1 ? 'var(--player1-color)' : 'var(--player2-color)';
+  turnEl.innerHTML = `Turno: <span style="color:${color}">${playerName(currentPlayer)}</span>`;
 }
 
-// ==================== VICTORIA ====================
+// ============ WIN ============
 function checkWin(row, col, player) {
   const dirs = [[0,1],[1,0],[1,1],[1,-1]];
   for (const [dr, dc] of dirs) {
-    let count = 1;
+    let n = 1;
     for (let i = 1; i < 4; i++) {
-      const r = row + dr * i, c = col + dc * i;
+      const r = row + dr*i, c = col + dc*i;
       if (r < 0 || r >= ROWS || c < 0 || c >= COLS || board[r][c] !== player) break;
-      count++;
+      n++;
     }
     for (let i = 1; i < 4; i++) {
-      const r = row - dr * i, c = col - dc * i;
+      const r = row - dr*i, c = col - dc*i;
       if (r < 0 || r >= ROWS || c < 0 || c >= COLS || board[r][c] !== player) break;
-      count++;
+      n++;
     }
-    if (count >= 4) return true;
+    if (n >= 4) return true;
   }
   return false;
 }
 
-// ==================== IA ====================
-function makeAIMove() {
-  if (gameOver) return;
+// ============ IA: PUNTO DE ENTRADA ============
+async function makeAIMove() {
+  if (gameOver || isAnimating || aiBusy) return;
+  aiBusy = true;
+  transpositions.clear();
 
-  // 1) Calcular candidatos locales SIEMPRE (rápido y fiable)
-  const level = aiLevelSelect.value;
-  let candidates;
+  const t0 = performance.now();
+  const depth = levelSel.value === 'medium' ? 3 : levelSel.value === 'hard' ? 5 : 6;
+  const scores = computeScores(depth);
+  const elapsed = (performance.now() - t0).toFixed(0);
 
-  if (useExternalAPI) {
-    // En modo API usamos una profundidad moderada para candidatos rápidos
-    candidates = getTopMoves(4);
-  } else if (level === 'medium') {
-    candidates = getTopMoves(2);
-  } else if (level === 'hard') {
-    candidates = getTopMoves(4);
-  } else {
-    candidates = getIterativeCandidates();
-  }
+  log(`── IA (${levelSel.value}, depth=${depth}, ${elapsed}ms) ──`);
+  log(formatScores(scores));
 
-  if (!candidates.length) return;
-  const best = candidates[0];
+  if (!scores.length) { aiBusy = false; return; }
 
-  // 2) Sin API → jugar la mejor local
-  if (!useExternalAPI) {
-    if (level === 'medium') {
-      // pequeña variedad entre las mejores para que no sea siempre igual
-      const top = candidates.filter(c => c.score >= best.score - 10).slice(0, 3);
-      makeMove(top[Math.floor(Math.random() * top.length)].col, true);
-    } else {
-      makeMove(best.col, true);
-    }
-    return;
-  }
-
-  // 3) Modo API: si la jugada es crítica (victoria/bloqueo forzado), no consultamos al LLM
+  const best = scores[0];
+  // Victoria/bloqueo forzado → jugar sin consultar API
   if (Math.abs(best.score) >= 500000) {
+    log(`Forzada: col ${best.col} (score ${best.score})`);
+    aiBusy = false;
     makeMove(best.col, true);
     return;
   }
 
-  // 4) Si solo hay una candidata razonable, jugarla
-  const viable = candidates.filter(c => c.score >= best.score - 100).slice(0, 3);
+  // Filtrar candidatas viables según dificultad
+  const threshold = levelSel.value === 'medium' ? 60 : levelSel.value === 'hard' ? 25 : 10;
+  const viable = scores.filter(s => s.score >= best.score - threshold);
+  log(`Umbral=${threshold}, viables: [${viable.map(s => s.col + ':' + s.score).join(', ')}]`);
+
+  // Si solo hay una, jugarla
   if (viable.length <= 1) {
+    log(`Única viable → col ${best.col}`);
+    aiBusy = false;
     makeMove(best.col, true);
     return;
   }
 
-  // 5) Consultar al LLM para que elija entre las 3 mejores
-  const provider = apiProviderSelect.value;
-  const opts = viable.map(c => c.col);
-  setAIStatus(`Consultando ${provider} (opciones: ${opts.join(', ')})…`, 'pending');
-
-  callProviderWithCandidates(provider, board, opts)
-    .then(col => {
-      if (col !== null && opts.includes(col)) {
-        setAIStatus(`✅ ${provider}: columna ${col}`, 'success');
-        makeMove(col, true);
-      } else {
-        setAIStatus(`⚠️ ${provider} respondió mal. Uso la jugada local (col ${best.col}).`, 'error');
-        makeMove(best.col, true);
+  // Modo API: solo se consulta si hay ambigüedad real
+  if (useAPI) {
+    try {
+      const choice = await askAPI(viable.map(s => s.col));
+      if (choice !== null && viable.some(s => s.col === choice)) {
+        log(`API eligió col ${choice}`);
+        aiBusy = false;
+        makeMove(choice, true);
+        return;
       }
-    })
-    .catch(err => {
-      setAIStatus(`❌ ${err.message}. Uso la jugada local (col ${best.col}).`, 'error');
-      makeMove(best.col, true);
-    });
+      log(`API sin elección válida, uso mejor local (col ${best.col})`);
+    } catch (err) {
+      log(`API error: ${err.message} → uso col ${best.col}`);
+    }
+    aiBusy = false;
+    makeMove(best.col, true);
+    return;
+  }
+
+  // Local: elegir ponderado por puntuación entre las viables
+  const pick = weightedPick(viable);
+  log(`Elegida col ${pick.col} (score ${pick.score})`);
+  aiBusy = false;
+  makeMove(pick.col, true);
 }
 
-// Devuelve las mejores jugadas ordenadas (col + score) para la profundidad dada
-function getTopMoves(depth) {
-  const scores = [];
+function weightedPick(candidates) {
+  if (candidates.length === 1) return candidates[0];
+  const best = candidates[0].score;
+  const weights = candidates.map(c => Math.max(1, c.score - best + 20));
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < candidates.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return candidates[i];
+  }
+  return candidates[0];
+}
+
+function formatScores(scores) {
+  return scores.map(s => `  col ${s.col}: ${s.score >= 0 ? '+' : ''}${s.score}`).join('\n');
+}
+
+// ============ NEGAMAX ============
+function computeScores(depth) {
+  const out = [];
   for (const col of COL_ORDER) {
-    const row = getLowestEmptyRow(col);
+    const row = getLowestRow(col);
     if (row === -1) continue;
-    board[row][col] = PLAYER2;
-    const score = negamax(board, depth, -Infinity, Infinity, -1);
+    board[row][col] = P2;
+    const score = negamax(depth, -Infinity, Infinity, -1);
     board[row][col] = EMPTY;
-    scores.push({ col, score });
+    out.push({ col, score });
   }
-  scores.sort((a, b) => b.score - a.score);
-  return scores;
+  out.sort((a, b) => b.score - a.score);
+  return out;
 }
 
-// Iterative deepening con tope de 800 ms (modo Experto)
-function getIterativeCandidates() {
-  const MAX_TIME = 800;
-  const startTime = performance.now();
-  let best = getTopMoves(2);
-
-  for (let depth = 3; depth <= 6; depth++) {
-    if (performance.now() - startTime > MAX_TIME) break;
-    const next = getTopMoves(depth);
-    if (next.length) best = next;
+function negamax(depth, alpha, beta, color) {
+  const term = checkTerminal();
+  if (term !== null) {
+    if (term === P2) return 1000000 + depth * 100;
+    if (term === P1) return -1000000 - depth * 100;
+    return 0;
   }
+  if (depth === 0) return evaluate();
+
+  const key = boardKey() + '|' + depth + '|' + color;
+  if (transpositions.has(key)) return transpositions.get(key);
+
+  const isAI = color === 1;
+  const piece = isAI ? P2 : P1;
+  let best = isAI ? -Infinity : Infinity;
+
+  for (const col of COL_ORDER) {
+    const row = getLowestRow(col);
+    if (row === -1) continue;
+    board[row][col] = piece;
+    const score = negamax(depth - 1, alpha, beta, -color);
+    board[row][col] = EMPTY;
+    if (isAI) {
+      best = Math.max(best, score);
+      alpha = Math.max(alpha, score);
+    } else {
+      best = Math.min(best, score);
+      beta = Math.min(beta, score);
+    }
+    if (beta <= alpha) break;
+  }
+  transpositions.set(key, best);
   return best;
 }
 
-// ==================== NEGAMAX (corregido) ====================
-function negamax(b, depth, alpha, beta, color) {
-  // color: 1 = turno de la IA (maximiza), -1 = turno del humano (minimiza)
-  const terminal = checkTerminal(b);
-  if (terminal !== null) {
-    if (terminal === PLAYER2) return 1000000 + depth * 100;
-    if (terminal === PLAYER1) return -1000000 - depth * 100;
-    return 0;
-  }
-
-  // ✅ BUG ARREGLADO: el caso base devuelve la evaluación directamente.
-  // Antes multiplicaba por `color`, lo que invertía el signo en los nodos
-  // del humano y hacía que la IA evitara sus propias buenas jugadas.
-  if (depth === 0) return evaluateBoard(b);
-
-  const key = boardKey(b) + '|' + depth + '|' + color;
-  if (transpositionTable.has(key)) return transpositionTable.get(key);
-
-  if (color === 1) {
-    let maxScore = -Infinity;
-    for (const col of COL_ORDER) {
-      const row = getLowestEmptyRowIn(b, col);
-      if (row === -1) continue;
-      b[row][col] = PLAYER2;
-      const score = negamax(b, depth - 1, alpha, beta, -1);
-      b[row][col] = EMPTY;
-      maxScore = Math.max(maxScore, score);
-      alpha = Math.max(alpha, score);
-      if (beta <= alpha) break;
-    }
-    transpositionTable.set(key, maxScore);
-    return maxScore;
-  } else {
-    let minScore = Infinity;
-    for (const col of COL_ORDER) {
-      const row = getLowestEmptyRowIn(b, col);
-      if (row === -1) continue;
-      b[row][col] = PLAYER1;
-      const score = negamax(b, depth - 1, alpha, beta, 1);
-      b[row][col] = EMPTY;
-      minScore = Math.min(minScore, score);
-      beta = Math.min(beta, score);
-      if (beta <= alpha) break;
-    }
-    transpositionTable.set(key, minScore);
-    return minScore;
-  }
-}
-
-function getLowestEmptyRowIn(b, col) {
-  for (let row = ROWS - 1; row >= 0; row--) {
-    if (b[row][col] === EMPTY) return row;
-  }
-  return -1;
-}
-
-function checkTerminal(b) {
+function checkTerminal() {
+  // horizontal
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS - 3; c++) {
-      const v = b[r][c];
-      if (v !== EMPTY && v === b[r][c+1] && v === b[r][c+2] && v === b[r][c+3]) return v;
+      const v = board[r][c];
+      if (v && v === board[r][c+1] && v === board[r][c+2] && v === board[r][c+3]) return v;
     }
+  // vertical
   for (let r = 0; r < ROWS - 3; r++)
     for (let c = 0; c < COLS; c++) {
-      const v = b[r][c];
-      if (v !== EMPTY && v === b[r+1][c] && v === b[r+2][c] && v === b[r+3][c]) return v;
+      const v = board[r][c];
+      if (v && v === board[r+1][c] && v === board[r+2][c] && v === board[r+3][c]) return v;
     }
+  // diag \
   for (let r = 0; r < ROWS - 3; r++)
     for (let c = 0; c < COLS - 3; c++) {
-      const v = b[r][c];
-      if (v !== EMPTY && v === b[r+1][c+1] && v === b[r+2][c+2] && v === b[r+3][c+3]) return v;
+      const v = board[r][c];
+      if (v && v === board[r+1][c+1] && v === board[r+2][c+2] && v === board[r+3][c+3]) return v;
     }
+  // diag /
   for (let r = 0; r < ROWS - 3; r++)
     for (let c = 3; c < COLS; c++) {
-      const v = b[r][c];
-      if (v !== EMPTY && v === b[r+1][c-1] && v === b[r+2][c-2] && v === b[r+3][c-3]) return v;
+      const v = board[r][c];
+      if (v && v === board[r+1][c-1] && v === board[r+2][c-2] && v === board[r+3][c-3]) return v;
     }
-  if (b[0].every(c => c !== EMPTY)) return 0;
+  if (board[0].every(v => v !== EMPTY)) return 0;
   return null;
 }
 
-function evaluateBoard(b) {
+// ============ EVALUACIÓN ============
+// El bonus de centro se reduce a 2 puntos (antes era 6). El resto del peso
+// viene de las ventanas, que ya favorecen el centro de forma natural.
+function evaluate() {
   let score = 0;
   for (let r = 0; r < ROWS; r++) {
-    if (b[r][3] === PLAYER2) score += 6;
-    else if (b[r][3] === PLAYER1) score -= 6;
-    for (const c of [2, 4]) {
-      if (b[r][c] === PLAYER2) score += 3;
-      else if (b[r][c] === PLAYER1) score -= 3;
-    }
+    if (board[r][3] === P2) score += 2;
+    else if (board[r][3] === P1) score -= 2;
   }
   const dirs = [[0,1],[1,0],[1,1],[1,-1]];
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++)
       for (const [dr, dc] of dirs) {
-        const er = r + dr * 3, ec = c + dc * 3;
+        const er = r + dr*3, ec = c + dc*3;
         if (er < 0 || er >= ROWS || ec < 0 || ec >= COLS) continue;
         const w = [];
-        for (let i = 0; i < 4; i++) w.push(b[r + dr * i][c + dc * i]);
-        score += evaluateWindow(w);
+        for (let i = 0; i < 4; i++) w.push(board[r + dr*i][c + dc*i]);
+        score += evalWindow(w);
       }
   return score;
 }
 
-function evaluateWindow(w) {
-  const ai = w.filter(c => c === PLAYER2).length;
-  const hu = w.filter(c => c === PLAYER1).length;
-  const em = w.filter(c => c === EMPTY).length;
+function evalWindow(w) {
+  const ai = w.filter(v => v === P2).length;
+  const hu = w.filter(v => v === P1).length;
+  const em = w.filter(v => v === EMPTY).length;
+  if (ai && hu) return 0;  // ventana muerta
   if (ai === 4) return 100000;
-  if (ai === 3 && em === 1) return 1000;
-  if (ai === 2 && em === 2) return 50;
-  if (ai === 1 && em === 3) return 5;
+  if (ai === 3 && em === 1) return 120;
+  if (ai === 2 && em === 2) return 12;
+  if (ai === 1 && em === 3) return 1;
   if (hu === 4) return -100000;
-  if (hu === 3 && em === 1) return -1200;
-  if (hu === 2 && em === 2) return -60;
-  if (hu === 1 && em === 3) return -6;
+  if (hu === 3 && em === 1) return -160;
+  if (hu === 2 && em === 2) return -15;
+  if (hu === 1 && em === 3) return -1;
   return 0;
 }
 
-function boardKey(b) { return b.map(r => r.join('')).join(''); }
-
-// ==================== PROMPT + PARSER ====================
-// El LLM ya no decide la jugada "libremente": solo elige entre las columnas
-// que el negamax local ya ha considerado buenas. Así es imposible que
-// devuelva una jugada absurda o que caiga siempre en el centro.
-function buildCandidatePrompt(currentBoard, candidateCols) {
-  const boardStr = currentBoard.map(row => row.join('')).join('');
-  return [
-    'You are playing Connect 4 as player 2 (yellow).',
-    'Board string is row by row from TOP to BOTTOM, each row left to right.',
-    'Chars: "0"=empty, "1"=opponent (red), "2"=you (yellow).',
-    'Board: ' + boardStr,
-    '',
-    'A strong Connect 4 engine has already filtered the best candidate columns.',
-    'You MUST choose exactly one of these columns: [' + candidateCols.join(', ') + '].',
-    'Reply with ONLY the digit of your chosen column. No explanation, no punctuation.'
-  ].join('\n');
+function boardKey() {
+  return board.map(r => r.join('')).join('');
 }
 
-function buildTestPrompt(currentBoard) {
-  const boardStr = currentBoard.map(row => row.join('')).join('');
-  return [
-    'Connect 4. Chars: 0=empty, 1=opponent, 2=you (yellow).',
+// ============ API ============
+function cfg(p) {
+  return {
+    key:   $(p + '-key').value.trim(),
+    model: $(p + '-model').value.trim(),
+    url:   $(p + '-url').value.trim() || DEFAULT_URLS[p]
+  };
+}
+
+async function askAPI(candidateCols) {
+  const provider = providerSel.value;
+  const { key, model, url } = cfg(provider);
+  if (!key)   throw new Error('Falta API key de ' + provider);
+  if (!model) throw new Error('Falta modelo de ' + provider);
+
+  const boardStr = board.map(r => r.join('')).join('');
+  const prompt = [
+    'You are playing Connect 4 as player 2 (yellow, "2"). Board string is',
+    'row by row TOP to BOTTOM, each row left to right. 0=empty, 1=opponent, 2=you.',
     'Board: ' + boardStr,
-    'Choose one column from 0 to 6 that is not full.',
-    'Reply with ONLY the digit.'
+    '',
+    'A local engine has shortlisted these columns as equally good: [' +
+      candidateCols.join(', ') + '].',
+    'Choose one. Prefer non-center columns if they are equally strong,',
+    'to add variety. Reply with ONLY the digit of your chosen column.'
   ].join('\n');
+
+  log(`API→${provider} url=${url} model=${model} candidates=[${candidateCols.join(',')}]`);
+  const t0 = performance.now();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 3000);
+
+  try {
+    let raw = '';
+    if (provider === 'openai') {
+      const isReasoner = /^o\d/.test(model);
+      const body = { model, messages: [{ role: 'user', content: prompt }] };
+      if (isReasoner) body.max_completion_tokens = 15;
+      else { body.max_tokens = 4; body.temperature = 0.4; }
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+        body: JSON.stringify(body), signal: ctrl.signal
+      });
+      if (!res.ok) throw new Error(`OpenAI HTTP ${res.status} ${(await res.text()).slice(0, 100)}`);
+      raw = (await res.json()).choices?.[0]?.message?.content ?? '';
+    } else if (provider === 'gemini') {
+      const fullUrl = `${url}/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
+      const res = await fetch(fullUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 8, temperature: 0.4 }
+        }), signal: ctrl.signal
+      });
+      if (!res.ok) throw new Error(`Gemini HTTP ${res.status} ${(await res.text()).slice(0, 100)}`);
+      raw = (await res.json()).candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+    } else {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + key,
+          'HTTP-Referer': location.origin || 'http://localhost',
+          'X-Title': 'Connect 4 IA Pro'
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 4,
+          temperature: 0.4
+        }), signal: ctrl.signal
+      });
+      if (!res.ok) throw new Error(`OpenRouter HTTP ${res.status} ${(await res.text()).slice(0, 100)}`);
+      raw = (await res.json()).choices?.[0]?.message?.content ?? '';
+    }
+
+    const ms = (performance.now() - t0).toFixed(0);
+    log(`API← ${provider} (${ms}ms) raw="${raw.replace(/\n/g, ' ')}"`);
+
+    const col = parseColumn(raw);
+    if (col !== null && candidateCols.includes(col)) return col;
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function parseColumn(text) {
   if (!text) return null;
   const t = text.trim();
   if (/^[0-6]$/.test(t)) return parseInt(t, 10);
-  const m1 = t.match(/(?:column|columna|col|play|choice|answer)\s*[:=]?\s*([0-6])/i);
-  if (m1) return parseInt(m1[1], 10);
-  const m2 = t.match(/[0-6]/);
-  return m2 ? parseInt(m2[0], 10) : null;
+  const m = t.match(/(?:column|columna|col|answer|respuesta)\s*[:=]?\s*([0-6])/i);
+  if (m) return parseInt(m[1], 10);
+  const d = t.match(/[0-6]/);
+  return d ? parseInt(d[0], 10) : null;
 }
 
-// ==================== PROVEEDORES ====================
-function getProviderConfig(provider) {
-  return {
-    key:   document.getElementById(provider + '-key').value.trim(),
-    model: document.getElementById(provider + '-model').value.trim()
-  };
-}
+async function testProvider(provider) {
+  const { key, model, url } = cfg(provider);
+  log(`Test ${provider}: url=${url} model=${model} key=${key ? '✓' : '✗'}`);
+  if (!key || !model) { log(`❌ ${provider}: faltan datos`); return; }
 
-async function callProviderWithCandidates(provider, currentBoard, candidateCols) {
-  const { key, model } = getProviderConfig(provider);
-  if (!key)   throw new Error('Falta la API key de ' + provider);
-  if (!model) throw new Error('Falta el modelo de ' + provider);
-
-  const prompt = buildCandidatePrompt(currentBoard, candidateCols);
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 3000);
-
+  const originalBoard = board;
+  board = Array.from({ length: ROWS }, () => Array(COLS).fill(EMPTY));
+  board[ROWS - 1][0] = P1;
+  board[ROWS - 1][1] = P2;
   try {
-    if (provider === 'openai')     return await callOpenAI(key, model, prompt, controller.signal);
-    if (provider === 'gemini')     return await callGemini(key, model, prompt, controller.signal);
-    if (provider === 'openrouter') return await callOpenRouter(key, model, prompt, controller.signal);
-    throw new Error('Proveedor desconocido: ' + provider);
+    const c = await askAPI([1, 2, 3]);
+    log(`✅ ${provider} test OK → col ${c}`);
+  } catch (e) {
+    log(`❌ ${provider} test: ${e.message}`);
   } finally {
-    clearTimeout(timeoutId);
+    board = originalBoard;
   }
 }
 
-async function callProviderForTest(provider, currentBoard) {
-  const { key, model } = getProviderConfig(provider);
-  if (!key)   throw new Error('Falta la API key de ' + provider);
-  if (!model) throw new Error('Falta el modelo de ' + provider);
-
-  const prompt = buildTestPrompt(currentBoard);
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
-
+// ============ PERSISTENCIA ============
+function loadCfg() {
   try {
-    if (provider === 'openai')     return await callOpenAI(key, model, prompt, controller.signal);
-    if (provider === 'gemini')     return await callGemini(key, model, prompt, controller.signal);
-    if (provider === 'openrouter') return await callOpenRouter(key, model, prompt, controller.signal);
-    throw new Error('Proveedor desconocido: ' + provider);
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
-async function callOpenAI(key, model, prompt, signal) {
-  const isReasoning = /^o\d/.test(model);
-  const body = { model, messages: [{ role: 'user', content: prompt }] };
-  if (isReasoning) body.max_completion_tokens = 20;
-  else { body.max_tokens = 5; body.temperature = 0; }
-
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-    body: JSON.stringify(body),
-    signal
-  });
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    throw new Error('OpenAI HTTP ' + res.status + ' ' + errText.slice(0, 100));
-  }
-  const data = await res.json();
-  return parseColumn(data.choices?.[0]?.message?.content);
-}
-
-async function callGemini(key, model, prompt, signal) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: 10, temperature: 0 }
-    }),
-    signal
-  });
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    throw new Error('Gemini HTTP ' + res.status + ' ' + errText.slice(0, 100));
-  }
-  const data = await res.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-  return parseColumn(text);
-}
-
-async function callOpenRouter(key, model, prompt, signal) {
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + key,
-      'HTTP-Referer': location.origin || 'http://localhost',
-      'X-Title': '4 en Raya IA Pro'
-    },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 5,
-      temperature: 0
-    }),
-    signal
-  });
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    throw new Error('OpenRouter HTTP ' + res.status + ' ' + errText.slice(0, 100));
-  }
-  const data = await res.json();
-  return parseColumn(data.choices?.[0]?.message?.content);
-}
-
-// ==================== PERSISTENCIA + UI ====================
-function setAIStatus(msg, type = '') {
-  aiStatusEl.textContent = msg;
-  aiStatusEl.className = 'ai-status ' + type;
-}
-
-function loadAPIConfig() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    const saved = JSON.parse(localStorage.getItem(STORAGE) || '{}');
     for (const p of ['openrouter', 'gemini', 'openai']) {
-      if (!saved[p]) continue;
-      const k = document.getElementById(p + '-key');
-      const m = document.getElementById(p + '-model');
-      if (k && saved[p].key)   k.value = saved[p].key;
-      if (m && saved[p].model) m.value = saved[p].model;
+      const s = saved[p] || {};
+      if (s.key)   $(p + '-key').value   = s.key;
+      if (s.model) $(p + '-model').value = s.model;
+      if (s.url)   $(p + '-url').value   = s.url;
     }
-  } catch (e) { console.warn('No se pudo cargar la configuración de API:', e); }
+  } catch (e) { console.warn(e); }
 }
 
-function saveAPIConfig() {
-  const config = {};
+function saveCfg() {
+  const o = {};
   for (const p of ['openrouter', 'gemini', 'openai']) {
-    config[p] = {
-      key:   document.getElementById(p + '-key').value,
-      model: document.getElementById(p + '-model').value
+    o[p] = {
+      key:   $(p + '-key').value,
+      model: $(p + '-model').value,
+      url:   $(p + '-url').value
     };
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+  localStorage.setItem(STORAGE, JSON.stringify(o));
 }
 
-function bindAPIConfigEvents() {
-  for (const p of ['openrouter', 'gemini', 'openai']) {
-    document.getElementById(p + '-key').addEventListener('input', saveAPIConfig);
-    document.getElementById(p + '-model').addEventListener('input', saveAPIConfig);
-  }
-  document.querySelectorAll('.test-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      const provider = btn.dataset.provider;
-      setAIStatus(`Probando ${provider}…`, 'pending');
-      const testBoard = Array.from({ length: ROWS }, () => Array(COLS).fill(EMPTY));
-      testBoard[ROWS - 1][0] = PLAYER1;
-      testBoard[ROWS - 1][1] = PLAYER2;
-      try {
-        const col = await callProviderForTest(provider, testBoard);
-        if (col !== null && col >= 0 && col < COLS && testBoard[0][col] === EMPTY) {
-          setAIStatus(`✅ ${provider} OK (columna ${col})`, 'success');
-        } else {
-          setAIStatus(`⚠️ ${provider} respondió pero no devolvió una columna válida`, 'error');
-        }
-      } catch (err) {
-        setAIStatus(`❌ ${provider}: ${err.message}`, 'error');
-      }
-    });
-  });
-}
-
-// ==================== EVENTOS ====================
-modeSelect.addEventListener('change', (e) => {
-  const mode = e.target.value;
-  aiEnabled = mode !== 'local';
-  useExternalAPI = mode === 'ai-api';
-  aiLevelSelect.style.display = (aiEnabled && !useExternalAPI) ? 'inline-block' : 'none';
-  apiProviderSelect.style.display = useExternalAPI ? 'inline-block' : 'none';
-  if (useExternalAPI) document.getElementById('apiConfigPanel').open = true;
+// ============ EVENTOS ============
+modeSel.addEventListener('change', () => {
+  aiEnabled = modeSel.value !== 'local';
+  useAPI = modeSel.value === 'api';
+  levelSel.style.display = (aiEnabled && !useAPI) ? '' : 'none';
+  providerSel.style.display = useAPI ? '' : 'none';
+  if (useAPI) $('cfgPanel').open = true;
   initGame();
 });
 
-restartBtn.addEventListener('click', initGame);
+$('restart').addEventListener('click', initGame);
 
-loadAPIConfig();
-bindAPIConfigEvents();
+for (const p of ['openrouter', 'gemini', 'openai']) {
+  $(p + '-key').addEventListener('input', saveCfg);
+  $(p + '-model').addEventListener('input', saveCfg);
+  $(p + '-url').addEventListener('input', saveCfg);
+}
+
+document.querySelectorAll('.test-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    testProvider(btn.dataset.p);
+  });
+});
+
+// ============ BOOT ============
+loadCfg();
+aiEnabled = modeSel.value !== 'local';
+useAPI = modeSel.value === 'api';
 initGame();
 </script>
 </body>
