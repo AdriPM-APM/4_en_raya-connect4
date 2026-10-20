@@ -59,7 +59,6 @@
       border-color: #eebbc3;
     }
 
-    /* ===== Panel de configuración de APIs ===== */
     .api-config {
       margin: 15px 0;
       background: #1a1a30;
@@ -94,7 +93,6 @@
       color: #ffb3b3;
       line-height: 1.4;
     }
-
     .provider-config {
       padding: 12px 16px;
       border-top: 1px solid #2f2f4d;
@@ -113,13 +111,8 @@
       font-size: 0.85rem;
       color: #b8b8d1;
     }
-    .provider-config .row {
-      display: flex;
-      gap: 8px;
-      margin-top: 4px;
-    }
+    .provider-config .row { display: flex; gap: 8px; margin-top: 4px; }
     .provider-config .row input { flex: 1; }
-
     .test-btn {
       padding: 4px 10px;
       font-size: 0.75rem;
@@ -127,7 +120,6 @@
       color: #f4f4f4;
     }
     .test-btn:hover { background: #5a5a7a; }
-
     .ai-status {
       min-height: 20px;
       margin: 8px 16px 16px;
@@ -138,7 +130,6 @@
     .ai-status.error   { color: #ff8080; }
     .ai-status.pending { color: #ffe066; }
 
-    /* ===== Tablero ===== */
     .board {
       background: var(--board-color);
       padding: 10px;
@@ -180,7 +171,6 @@
     }
     .cell:hover { background: #f0f0f0; }
 
-    /* Ficha flotante con caída y rebote rápido */
     .floater {
       position: absolute;
       border-radius: 50%;
@@ -234,25 +224,21 @@
     <button id="restartBtn">Reiniciar Juego</button>
   </div>
 
-  <!-- ============ PANEL DE CONFIGURACIÓN DE APIs ============ -->
   <details class="api-config" id="apiConfigPanel">
     <summary>⚙️ Configuración de APIs (claves guardadas solo en tu navegador)</summary>
 
     <p class="api-warning">
       ⚠️ <strong>Aviso de seguridad:</strong> las API keys se guardan en
-      <code>localStorage</code> de este navegador. Cualquiera con acceso a tu
-      equipo o a las DevTools puede leerlas. No uses este archivo en un hosting
-      público con tus claves dentro, ni lo compartas sin vaciar los campos.
-      Revoca las claves si sospechas que se han filtrado.
+      <code>localStorage</code> de este navegador y son visibles en DevTools.
+      No uses este archivo en un hosting público con tus claves dentro, ni lo
+      compartas sin vaciar los campos. Revoca las claves si sospechas que se
+      han filtrado.
     </p>
 
-    <!-- OpenRouter -->
     <div class="provider-config" data-provider="openrouter">
       <h3>OpenRouter <button class="test-btn" data-provider="openrouter">Probar</button></h3>
       <label>API Key
-        <div class="row">
-          <input type="password" id="openrouter-key" placeholder="sk-or-v1-..." autocomplete="off" spellcheck="false" />
-        </div>
+        <div class="row"><input type="password" id="openrouter-key" placeholder="sk-or-v1-..." autocomplete="off" spellcheck="false" /></div>
       </label>
       <label>Modelo
         <div class="row">
@@ -269,13 +255,10 @@
       </label>
     </div>
 
-    <!-- Gemini -->
     <div class="provider-config" data-provider="gemini">
       <h3>Google Gemini <button class="test-btn" data-provider="gemini">Probar</button></h3>
       <label>API Key
-        <div class="row">
-          <input type="password" id="gemini-key" placeholder="AIza..." autocomplete="off" spellcheck="false" />
-        </div>
+        <div class="row"><input type="password" id="gemini-key" placeholder="AIza..." autocomplete="off" spellcheck="false" /></div>
       </label>
       <label>Modelo
         <div class="row">
@@ -291,13 +274,10 @@
       </label>
     </div>
 
-    <!-- OpenAI -->
     <div class="provider-config" data-provider="openai">
       <h3>OpenAI <button class="test-btn" data-provider="openai">Probar</button></h3>
       <label>API Key
-        <div class="row">
-          <input type="password" id="openai-key" placeholder="sk-..." autocomplete="off" spellcheck="false" />
-        </div>
+        <div class="row"><input type="password" id="openai-key" placeholder="sk-..." autocomplete="off" spellcheck="false" /></div>
       </label>
       <label>Modelo
         <div class="row">
@@ -336,7 +316,6 @@ let gameOver = false;
 let aiEnabled = false;
 let useExternalAPI = false;
 let isAnimating = false;
-let isThinking  = false;
 
 const boardElement = document.getElementById('board');
 const turnIndicator = document.getElementById('turnIndicator');
@@ -348,6 +327,7 @@ const restartBtn = document.getElementById('restartBtn');
 const aiStatusEl = document.getElementById('aiStatus');
 
 const transpositionTable = new Map();
+const COL_ORDER = [3, 2, 4, 1, 5, 0, 6]; // centro primero → mejor poda alfa-beta
 
 // ==================== INICIALIZACIÓN ====================
 function initGame() {
@@ -355,7 +335,6 @@ function initGame() {
   currentPlayer = PLAYER1;
   gameOver = false;
   isAnimating = false;
-  isThinking = false;
   transpositionTable.clear();
   createBoard();
   updateTurnIndicator();
@@ -393,7 +372,7 @@ function updateBoardDisplay() {
 
 // ==================== MOVIMIENTO + ANIMACIÓN ====================
 function makeMove(col, isAIMove = false) {
-  if (gameOver || isAnimating || isThinking) return;
+  if (gameOver || isAnimating) return;
   if (!isAIMove && aiEnabled && currentPlayer === PLAYER2) return;
   if (col < 0 || col >= COLS) return;
 
@@ -449,7 +428,7 @@ function finalizeMove(row, col) {
   currentPlayer = currentPlayer === PLAYER1 ? PLAYER2 : PLAYER1;
   updateTurnIndicator();
   if (aiEnabled && currentPlayer === PLAYER2 && !gameOver) {
-    setTimeout(makeAIMove, 250);
+    makeAIMove(); // sin setTimeout: la IA arranca al instante
   }
 }
 
@@ -460,17 +439,14 @@ function getLowestEmptyRow(col) {
   }
   return -1;
 }
-function isBoardFull() {
-  return board[0].every(cell => cell !== EMPTY);
-}
-function getPlayerName(player) {
-  if (aiEnabled && player === PLAYER2) return 'IA';
-  return player === PLAYER1 ? 'Rojo' : 'Amarillo';
+function isBoardFull() { return board[0].every(c => c !== EMPTY); }
+function getPlayerName(p) {
+  if (aiEnabled && p === PLAYER2) return 'IA';
+  return p === PLAYER1 ? 'Rojo' : 'Amarillo';
 }
 function updateTurnIndicator() {
   const color = currentPlayer === PLAYER1 ? 'var(--player1-color)' : 'var(--player2-color)';
-  const thinkingTxt = isThinking ? ' <em style="color:#ffe066">(pensando…)</em>' : '';
-  turnIndicator.innerHTML = `Turno: <span style="color: ${color}">${getPlayerName(currentPlayer)}</span>${thinkingTxt}`;
+  turnIndicator.innerHTML = `Turno: <span style="color: ${color}">${getPlayerName(currentPlayer)}</span>`;
 }
 
 // ==================== VICTORIA ====================
@@ -493,134 +469,124 @@ function checkWin(row, col, player) {
   return false;
 }
 
-// ==================== IA LOCAL ====================
+// ==================== IA ====================
 function makeAIMove() {
   if (gameOver) return;
 
-  if (useExternalAPI) {
-    isThinking = true;
-    updateTurnIndicator();
-    const provider = apiProviderSelect.value;
-    setAIStatus(`Consultando ${provider}…`, 'pending');
+  // 1) Calcular candidatos locales SIEMPRE (rápido y fiable)
+  const level = aiLevelSelect.value;
+  let candidates;
 
-    callProvider(provider, board)
-      .then(col => {
-        isThinking = false;
-        updateTurnIndicator();
-        if (col !== null && col >= 0 && col < COLS && getLowestEmptyRow(col) !== -1) {
-          setAIStatus(`✅ ${provider}: columna ${col}`, 'success');
-          makeMove(col, true);
-        } else {
-          setAIStatus(`⚠️ ${provider} devolvió una columna inválida. Usando IA local.`, 'error');
-          fallbackAIMove();
-        }
-      })
-      .catch(err => {
-        isThinking = false;
-        updateTurnIndicator();
-        console.warn(err);
-        setAIStatus(`❌ ${err.message}. Usando IA local de respaldo.`, 'error');
-        fallbackAIMove();
-      });
+  if (useExternalAPI) {
+    // En modo API usamos una profundidad moderada para candidatos rápidos
+    candidates = getTopMoves(4);
+  } else if (level === 'medium') {
+    candidates = getTopMoves(2);
+  } else if (level === 'hard') {
+    candidates = getTopMoves(4);
+  } else {
+    candidates = getIterativeCandidates();
+  }
+
+  if (!candidates.length) return;
+  const best = candidates[0];
+
+  // 2) Sin API → jugar la mejor local
+  if (!useExternalAPI) {
+    if (level === 'medium') {
+      // pequeña variedad entre las mejores para que no sea siempre igual
+      const top = candidates.filter(c => c.score >= best.score - 10).slice(0, 3);
+      makeMove(top[Math.floor(Math.random() * top.length)].col, true);
+    } else {
+      makeMove(best.col, true);
+    }
     return;
   }
 
-  const level = aiLevelSelect.value;
-  let col;
-  if (level === 'medium')    col = getMediumAIMove();
-  else if (level === 'hard') col = getHardAIMove();
-  else                        col = getExpertAIMove();
+  // 3) Modo API: si la jugada es crítica (victoria/bloqueo forzado), no consultamos al LLM
+  if (Math.abs(best.score) >= 500000) {
+    makeMove(best.col, true);
+    return;
+  }
 
-  if (col !== null) makeMove(col, true);
+  // 4) Si solo hay una candidata razonable, jugarla
+  const viable = candidates.filter(c => c.score >= best.score - 100).slice(0, 3);
+  if (viable.length <= 1) {
+    makeMove(best.col, true);
+    return;
+  }
+
+  // 5) Consultar al LLM para que elija entre las 3 mejores
+  const provider = apiProviderSelect.value;
+  const opts = viable.map(c => c.col);
+  setAIStatus(`Consultando ${provider} (opciones: ${opts.join(', ')})…`, 'pending');
+
+  callProviderWithCandidates(provider, board, opts)
+    .then(col => {
+      if (col !== null && opts.includes(col)) {
+        setAIStatus(`✅ ${provider}: columna ${col}`, 'success');
+        makeMove(col, true);
+      } else {
+        setAIStatus(`⚠️ ${provider} respondió mal. Uso la jugada local (col ${best.col}).`, 'error');
+        makeMove(best.col, true);
+      }
+    })
+    .catch(err => {
+      setAIStatus(`❌ ${err.message}. Uso la jugada local (col ${best.col}).`, 'error');
+      makeMove(best.col, true);
+    });
 }
 
-function fallbackAIMove() {
-  const col = getMediumAIMove();
-  if (col !== null) makeMove(col, true);
-}
-
-function getMediumAIMove() {
-  for (let col = 0; col < COLS; col++) {
+// Devuelve las mejores jugadas ordenadas (col + score) para la profundidad dada
+function getTopMoves(depth) {
+  const scores = [];
+  for (const col of COL_ORDER) {
     const row = getLowestEmptyRow(col);
     if (row === -1) continue;
-    board[row][col] = PLAYER2;
-    const wins = checkWin(row, col, PLAYER2);
-    board[row][col] = EMPTY;
-    if (wins) return col;
-  }
-  for (let col = 0; col < COLS; col++) {
-    const row = getLowestEmptyRow(col);
-    if (row === -1) continue;
-    board[row][col] = PLAYER1;
-    const wins = checkWin(row, col, PLAYER1);
-    board[row][col] = EMPTY;
-    if (wins) return col;
-  }
-  const valid = [];
-  for (let col = 0; col < COLS; col++) {
-    if (getLowestEmptyRow(col) !== -1) valid.push(col);
-  }
-  if (!valid.length) return null;
-  valid.sort((a, b) => Math.abs(3 - a) - Math.abs(3 - b));
-  const pool = valid.slice(0, Math.min(3, valid.length));
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
-function getHardAIMove() {
-  let bestScore = -Infinity, bestCol = null;
-  for (let col = 0; col < COLS; col++) {
-    const row = getLowestEmptyRow(col);
-    if (row === -1) continue;
-    board[row][col] = PLAYER2;
-    const score = negamax(board, 4, -Infinity, Infinity, -1);
-    board[row][col] = EMPTY;
-    if (score > bestScore) { bestScore = score; bestCol = col; }
-  }
-  return bestCol;
-}
-
-function getExpertAIMove() {
-  const MAX_TIME_MS = 2500;
-  const startTime = performance.now();
-  let bestMove = null;
-  for (let depth = 1; depth <= 9; depth++) {
-    if (performance.now() - startTime > MAX_TIME_MS) break;
-    const move = searchAtDepth(depth, startTime, MAX_TIME_MS);
-    if (move !== null) bestMove = move;
-  }
-  return bestMove === null ? getHardAIMove() : bestMove;
-}
-
-function searchAtDepth(depth, startTime, maxTime) {
-  let bestScore = -Infinity, bestCol = null;
-  const orderedCols = [3, 2, 4, 1, 5, 0, 6].filter(c => getLowestEmptyRow(c) !== -1);
-  for (const col of orderedCols) {
-    if (performance.now() - startTime > maxTime) return bestCol;
-    const row = getLowestEmptyRow(col);
     board[row][col] = PLAYER2;
     const score = negamax(board, depth, -Infinity, Infinity, -1);
     board[row][col] = EMPTY;
-    if (score > bestScore) { bestScore = score; bestCol = col; }
+    scores.push({ col, score });
   }
-  return bestCol;
+  scores.sort((a, b) => b.score - a.score);
+  return scores;
 }
 
+// Iterative deepening con tope de 800 ms (modo Experto)
+function getIterativeCandidates() {
+  const MAX_TIME = 800;
+  const startTime = performance.now();
+  let best = getTopMoves(2);
+
+  for (let depth = 3; depth <= 6; depth++) {
+    if (performance.now() - startTime > MAX_TIME) break;
+    const next = getTopMoves(depth);
+    if (next.length) best = next;
+  }
+  return best;
+}
+
+// ==================== NEGAMAX (corregido) ====================
 function negamax(b, depth, alpha, beta, color) {
+  // color: 1 = turno de la IA (maximiza), -1 = turno del humano (minimiza)
   const terminal = checkTerminal(b);
   if (terminal !== null) {
     if (terminal === PLAYER2) return 1000000 + depth * 100;
     if (terminal === PLAYER1) return -1000000 - depth * 100;
     return 0;
   }
-  if (depth === 0) return evaluateBoard(b) * color;
+
+  // ✅ BUG ARREGLADO: el caso base devuelve la evaluación directamente.
+  // Antes multiplicaba por `color`, lo que invertía el signo en los nodos
+  // del humano y hacía que la IA evitara sus propias buenas jugadas.
+  if (depth === 0) return evaluateBoard(b);
 
   const key = boardKey(b) + '|' + depth + '|' + color;
   if (transpositionTable.has(key)) return transpositionTable.get(key);
 
-  const moveOrder = [3, 2, 4, 1, 5, 0, 6];
   if (color === 1) {
     let maxScore = -Infinity;
-    for (const col of moveOrder) {
+    for (const col of COL_ORDER) {
       const row = getLowestEmptyRowIn(b, col);
       if (row === -1) continue;
       b[row][col] = PLAYER2;
@@ -634,7 +600,7 @@ function negamax(b, depth, alpha, beta, color) {
     return maxScore;
   } else {
     let minScore = Infinity;
-    for (const col of moveOrder) {
+    for (const col of COL_ORDER) {
       const row = getLowestEmptyRowIn(b, col);
       if (row === -1) continue;
       b[row][col] = PLAYER1;
@@ -657,52 +623,53 @@ function getLowestEmptyRowIn(b, col) {
 }
 
 function checkTerminal(b) {
-  for (let row = 0; row < ROWS; row++)
-    for (let col = 0; col < COLS - 3; col++) {
-      const v = b[row][col];
-      if (v !== EMPTY && v === b[row][col+1] && v === b[row][col+2] && v === b[row][col+3]) return v;
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS - 3; c++) {
+      const v = b[r][c];
+      if (v !== EMPTY && v === b[r][c+1] && v === b[r][c+2] && v === b[r][c+3]) return v;
     }
-  for (let row = 0; row < ROWS - 3; row++)
-    for (let col = 0; col < COLS; col++) {
-      const v = b[row][col];
-      if (v !== EMPTY && v === b[row+1][col] && v === b[row+2][col] && v === b[row+3][col]) return v;
+  for (let r = 0; r < ROWS - 3; r++)
+    for (let c = 0; c < COLS; c++) {
+      const v = b[r][c];
+      if (v !== EMPTY && v === b[r+1][c] && v === b[r+2][c] && v === b[r+3][c]) return v;
     }
-  for (let row = 0; row < ROWS - 3; row++)
-    for (let col = 0; col < COLS - 3; col++) {
-      const v = b[row][col];
-      if (v !== EMPTY && v === b[row+1][col+1] && v === b[row+2][col+2] && v === b[row+3][col+3]) return v;
+  for (let r = 0; r < ROWS - 3; r++)
+    for (let c = 0; c < COLS - 3; c++) {
+      const v = b[r][c];
+      if (v !== EMPTY && v === b[r+1][c+1] && v === b[r+2][c+2] && v === b[r+3][c+3]) return v;
     }
-  for (let row = 0; row < ROWS - 3; row++)
-    for (let col = 3; col < COLS; col++) {
-      const v = b[row][col];
-      if (v !== EMPTY && v === b[row+1][col-1] && v === b[row+2][col-2] && v === b[row+3][col-3]) return v;
+  for (let r = 0; r < ROWS - 3; r++)
+    for (let c = 3; c < COLS; c++) {
+      const v = b[r][c];
+      if (v !== EMPTY && v === b[r+1][c-1] && v === b[r+2][c-2] && v === b[r+3][c-3]) return v;
     }
-  if (b[0].every(cell => cell !== EMPTY)) return 0;
+  if (b[0].every(c => c !== EMPTY)) return 0;
   return null;
 }
 
 function evaluateBoard(b) {
   let score = 0;
-  for (let row = 0; row < ROWS; row++) {
-    if (b[row][3] === PLAYER2) score += 6;
-    else if (b[row][3] === PLAYER1) score -= 6;
+  for (let r = 0; r < ROWS; r++) {
+    if (b[r][3] === PLAYER2) score += 6;
+    else if (b[r][3] === PLAYER1) score -= 6;
     for (const c of [2, 4]) {
-      if (b[row][c] === PLAYER2) score += 3;
-      else if (b[row][c] === PLAYER1) score -= 3;
+      if (b[r][c] === PLAYER2) score += 3;
+      else if (b[r][c] === PLAYER1) score -= 3;
     }
   }
   const dirs = [[0,1],[1,0],[1,1],[1,-1]];
-  for (let row = 0; row < ROWS; row++)
-    for (let col = 0; col < COLS; col++)
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
       for (const [dr, dc] of dirs) {
-        const endRow = row + dr * 3, endCol = col + dc * 3;
-        if (endRow < 0 || endRow >= ROWS || endCol < 0 || endCol >= COLS) continue;
+        const er = r + dr * 3, ec = c + dc * 3;
+        if (er < 0 || er >= ROWS || ec < 0 || ec >= COLS) continue;
         const w = [];
-        for (let i = 0; i < 4; i++) w.push(b[row + dr * i][col + dc * i]);
+        for (let i = 0; i < 4; i++) w.push(b[r + dr * i][c + dc * i]);
         score += evaluateWindow(w);
       }
   return score;
 }
+
 function evaluateWindow(w) {
   const ai = w.filter(c => c === PLAYER2).length;
   const hu = w.filter(c => c === PLAYER1).length;
@@ -717,55 +684,34 @@ function evaluateWindow(w) {
   if (hu === 1 && em === 3) return -6;
   return 0;
 }
+
 function boardKey(b) { return b.map(r => r.join('')).join(''); }
 
 // ==================== PROMPT + PARSER ====================
-// Se le da al modelo un prompt estricto con la jugada de victoria/bloqueo
-// calculada localmente, para que no tenga que "razonar" mecánica que ya
-// sabemos. Así minimizamos sus alucinaciones.
-function buildPrompt(currentBoard) {
+// El LLM ya no decide la jugada "libremente": solo elige entre las columnas
+// que el negamax local ya ha considerado buenas. Así es imposible que
+// devuelva una jugada absurda o que caiga siempre en el centro.
+function buildCandidatePrompt(currentBoard, candidateCols) {
   const boardStr = currentBoard.map(row => row.join('')).join('');
-  const availCols = [];
-  for (let c = 0; c < COLS; c++) {
-    if (getLowestEmptyRow(c) !== -1) availCols.push(c);
-  }
-
-  // Calcular jugadas críticas localmente y pasárselas como pistas
-  let winningCol = null, blockingCol = null;
-  for (const c of availCols) {
-    const r = getLowestEmptyRow(c);
-    currentBoard[r][c] = PLAYER2;
-    if (checkWin(r, c, PLAYER2)) winningCol = c;
-    currentBoard[r][c] = EMPTY;
-    if (winningCol !== null) break;
-  }
-  if (winningCol === null) {
-    for (const c of availCols) {
-      const r = getLowestEmptyRow(c);
-      currentBoard[r][c] = PLAYER1;
-      if (checkWin(r, c, PLAYER1)) blockingCol = c;
-      currentBoard[r][c] = EMPTY;
-      if (blockingCol !== null) break;
-    }
-  }
-
   return [
     'You are playing Connect 4 as player 2 (yellow).',
-    'The board is 6 rows x 7 columns. Board string is row by row from TOP to BOTTOM, each row left to right.',
-    'Characters: "0"=empty, "1"=opponent (red), "2"=you (yellow).',
-    '',
+    'Board string is row by row from TOP to BOTTOM, each row left to right.',
+    'Chars: "0"=empty, "1"=opponent (red), "2"=you (yellow).',
     'Board: ' + boardStr,
     '',
-    'Available columns (zero-indexed, not full): ' + availCols.join(', '),
-    '',
-    winningCol !== null
-      ? 'IMMEDIATE WIN AVAILABLE: dropping in column ' + winningCol + ' wins the game. You MUST choose it.'
-      : blockingCol !== null
-        ? 'OPPONENT WINS NEXT TURN in column ' + blockingCol + '. You MUST block it by choosing it.'
-        : 'No immediate win or forced block. Choose the best strategic column (center preferred).',
-    '',
-    'Reply with ONLY the digit of your chosen column (a single character 0 to ' + (COLS - 1) + ').',
-    'No explanation, no punctuation, no formatting. Just the digit.'
+    'A strong Connect 4 engine has already filtered the best candidate columns.',
+    'You MUST choose exactly one of these columns: [' + candidateCols.join(', ') + '].',
+    'Reply with ONLY the digit of your chosen column. No explanation, no punctuation.'
+  ].join('\n');
+}
+
+function buildTestPrompt(currentBoard) {
+  const boardStr = currentBoard.map(row => row.join('')).join('');
+  return [
+    'Connect 4. Chars: 0=empty, 1=opponent, 2=you (yellow).',
+    'Board: ' + boardStr,
+    'Choose one column from 0 to 6 that is not full.',
+    'Reply with ONLY the digit.'
   ].join('\n');
 }
 
@@ -773,13 +719,13 @@ function parseColumn(text) {
   if (!text) return null;
   const t = text.trim();
   if (/^[0-6]$/.test(t)) return parseInt(t, 10);
-  const m1 = t.match(/(?:column|columna|col|play|jugar|choice|answer|respuesta)\s*[:=]?\s*([0-6])/i);
+  const m1 = t.match(/(?:column|columna|col|play|choice|answer)\s*[:=]?\s*([0-6])/i);
   if (m1) return parseInt(m1[1], 10);
   const m2 = t.match(/[0-6]/);
   return m2 ? parseInt(m2[0], 10) : null;
 }
 
-// ==================== LLAMADAS A PROVEEDORES ====================
+// ==================== PROVEEDORES ====================
 function getProviderConfig(provider) {
   return {
     key:   document.getElementById(provider + '-key').value.trim(),
@@ -787,71 +733,86 @@ function getProviderConfig(provider) {
   };
 }
 
-async function callProvider(provider, currentBoard) {
+async function callProviderWithCandidates(provider, currentBoard, candidateCols) {
   const { key, model } = getProviderConfig(provider);
   if (!key)   throw new Error('Falta la API key de ' + provider);
   if (!model) throw new Error('Falta el modelo de ' + provider);
 
-  const prompt = buildPrompt(currentBoard);
+  const prompt = buildCandidatePrompt(currentBoard, candidateCols);
 
-  if (provider === 'openai')     return callOpenAI(key, model, prompt);
-  if (provider === 'gemini')     return callGemini(key, model, prompt);
-  if (provider === 'openrouter') return callOpenRouter(key, model, prompt);
-  throw new Error('Proveedor desconocido: ' + provider);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+  try {
+    if (provider === 'openai')     return await callOpenAI(key, model, prompt, controller.signal);
+    if (provider === 'gemini')     return await callGemini(key, model, prompt, controller.signal);
+    if (provider === 'openrouter') return await callOpenRouter(key, model, prompt, controller.signal);
+    throw new Error('Proveedor desconocido: ' + provider);
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
-async function callOpenAI(key, model, prompt) {
-  // Algunos modelos razonadores (o1, o3, o4) requieren max_completion_tokens y
-  // no aceptan temperature. Detectamos por prefijo.
-  const isReasoning = /^o\d/.test(model);
-  const body = {
-    model,
-    messages: [{ role: 'user', content: prompt }]
-  };
-  if (isReasoning) {
-    body.max_completion_tokens = 100;
-  } else {
-    body.max_tokens = 10;
-    body.temperature = 0;
+async function callProviderForTest(provider, currentBoard) {
+  const { key, model } = getProviderConfig(provider);
+  if (!key)   throw new Error('Falta la API key de ' + provider);
+  if (!model) throw new Error('Falta el modelo de ' + provider);
+
+  const prompt = buildTestPrompt(currentBoard);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    if (provider === 'openai')     return await callOpenAI(key, model, prompt, controller.signal);
+    if (provider === 'gemini')     return await callGemini(key, model, prompt, controller.signal);
+    if (provider === 'openrouter') return await callOpenRouter(key, model, prompt, controller.signal);
+    throw new Error('Proveedor desconocido: ' + provider);
+  } finally {
+    clearTimeout(timeoutId);
   }
+}
+
+async function callOpenAI(key, model, prompt, signal) {
+  const isReasoning = /^o\d/.test(model);
+  const body = { model, messages: [{ role: 'user', content: prompt }] };
+  if (isReasoning) body.max_completion_tokens = 20;
+  else { body.max_tokens = 5; body.temperature = 0; }
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + key
-    },
-    body: JSON.stringify(body)
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify(body),
+    signal
   });
-
   if (!res.ok) {
     const errText = await res.text().catch(() => '');
-    throw new Error('OpenAI HTTP ' + res.status + ' ' + errText.slice(0, 120));
+    throw new Error('OpenAI HTTP ' + res.status + ' ' + errText.slice(0, 100));
   }
   const data = await res.json();
   return parseColumn(data.choices?.[0]?.message?.content);
 }
 
-async function callGemini(key, model, prompt) {
+async function callGemini(key, model, prompt, signal) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: 20, temperature: 0 }
-    })
+      generationConfig: { maxOutputTokens: 10, temperature: 0 }
+    }),
+    signal
   });
   if (!res.ok) {
     const errText = await res.text().catch(() => '');
-    throw new Error('Gemini HTTP ' + res.status + ' ' + errText.slice(0, 120));
+    throw new Error('Gemini HTTP ' + res.status + ' ' + errText.slice(0, 100));
   }
   const data = await res.json();
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
   return parseColumn(text);
 }
 
-async function callOpenRouter(key, model, prompt) {
+async function callOpenRouter(key, model, prompt, signal) {
   const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -863,13 +824,14 @@ async function callOpenRouter(key, model, prompt) {
     body: JSON.stringify({
       model,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 10,
+      max_tokens: 5,
       temperature: 0
-    })
+    }),
+    signal
   });
   if (!res.ok) {
     const errText = await res.text().catch(() => '');
-    throw new Error('OpenRouter HTTP ' + res.status + ' ' + errText.slice(0, 120));
+    throw new Error('OpenRouter HTTP ' + res.status + ' ' + errText.slice(0, 100));
   }
   const data = await res.json();
   return parseColumn(data.choices?.[0]?.message?.content);
@@ -884,50 +846,42 @@ function setAIStatus(msg, type = '') {
 function loadAPIConfig() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    for (const provider of ['openrouter', 'gemini', 'openai']) {
-      if (!saved[provider]) continue;
-      const keyEl   = document.getElementById(provider + '-key');
-      const modelEl = document.getElementById(provider + '-model');
-      if (keyEl   && saved[provider].key)   keyEl.value   = saved[provider].key;
-      if (modelEl && saved[provider].model) modelEl.value = saved[provider].model;
+    for (const p of ['openrouter', 'gemini', 'openai']) {
+      if (!saved[p]) continue;
+      const k = document.getElementById(p + '-key');
+      const m = document.getElementById(p + '-model');
+      if (k && saved[p].key)   k.value = saved[p].key;
+      if (m && saved[p].model) m.value = saved[p].model;
     }
-  } catch (e) {
-    console.warn('No se pudo cargar la configuración de API:', e);
-  }
+  } catch (e) { console.warn('No se pudo cargar la configuración de API:', e); }
 }
 
 function saveAPIConfig() {
   const config = {};
-  for (const provider of ['openrouter', 'gemini', 'openai']) {
-    config[provider] = {
-      key:   document.getElementById(provider + '-key').value,
-      model: document.getElementById(provider + '-model').value
+  for (const p of ['openrouter', 'gemini', 'openai']) {
+    config[p] = {
+      key:   document.getElementById(p + '-key').value,
+      model: document.getElementById(p + '-model').value
     };
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
 }
 
 function bindAPIConfigEvents() {
-  for (const provider of ['openrouter', 'gemini', 'openai']) {
-    document.getElementById(provider + '-key').addEventListener('input', saveAPIConfig);
-    document.getElementById(provider + '-model').addEventListener('input', saveAPIConfig);
+  for (const p of ['openrouter', 'gemini', 'openai']) {
+    document.getElementById(p + '-key').addEventListener('input', saveAPIConfig);
+    document.getElementById(p + '-model').addEventListener('input', saveAPIConfig);
   }
-
-  // Botones "Probar"
   document.querySelectorAll('.test-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
       const provider = btn.dataset.provider;
       setAIStatus(`Probando ${provider}…`, 'pending');
-
-      // Posición de prueba: tablero casi vacío, con una ficha roja y otra
-      // amarilla en la base. Sirve para verificar credenciales y modelo.
       const testBoard = Array.from({ length: ROWS }, () => Array(COLS).fill(EMPTY));
       testBoard[ROWS - 1][0] = PLAYER1;
       testBoard[ROWS - 1][1] = PLAYER2;
-
       try {
-        const col = await callProvider(provider, testBoard);
+        const col = await callProviderForTest(provider, testBoard);
         if (col !== null && col >= 0 && col < COLS && testBoard[0][col] === EMPTY) {
           setAIStatus(`✅ ${provider} OK (columna ${col})`, 'success');
         } else {
@@ -947,15 +901,12 @@ modeSelect.addEventListener('change', (e) => {
   useExternalAPI = mode === 'ai-api';
   aiLevelSelect.style.display = (aiEnabled && !useExternalAPI) ? 'inline-block' : 'none';
   apiProviderSelect.style.display = useExternalAPI ? 'inline-block' : 'none';
-  if (useExternalAPI) {
-    document.getElementById('apiConfigPanel').open = true;
-  }
+  if (useExternalAPI) document.getElementById('apiConfigPanel').open = true;
   initGame();
 });
 
 restartBtn.addEventListener('click', initGame);
 
-// Arranque
 loadAPIConfig();
 bindAPIConfigEvents();
 initGame();
