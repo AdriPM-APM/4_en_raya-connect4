@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>4 en Raya - AdriPM-APM</title>
+  <title>4 en Raya - AdriPM-APM (IA Pro)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <style>
     :root {
@@ -22,18 +22,8 @@
       flex-direction: column;
       align-items: center;
     }
-    .header-info {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.2);
-      padding: 8px 16px;
-      font-size: 0.9rem;
-      display: flex;
-      justify-content: space-between;
-      color: #eebbc3;
-      box-sizing: border-box;
-    }
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: 20px auto;
       padding: 24px;
       background: #22223b;
@@ -48,22 +38,107 @@
       gap: 15px;
       flex-wrap: wrap;
     }
-    button,
-    select {
-      padding: 8px 16px;
+    button, select, input[type="text"], input[type="password"] {
+      padding: 8px 12px;
       border: none;
       border-radius: 6px;
       font-size: 1rem;
-      cursor: pointer;
+      font-family: inherit;
     }
-    button {
-      background: #eebbc3;
-      color: #232946;
-    }
-    select {
+    button { background: #eebbc3; color: #232946; cursor: pointer; }
+    select { background: #2f2f4d; color: #f4f4f4; cursor: pointer; }
+    input[type="text"], input[type="password"] {
       background: #2f2f4d;
       color: #f4f4f4;
+      border: 1px solid #3a3a5c;
+      width: 100%;
+      box-sizing: border-box;
     }
+    input[type="text"]:focus, input[type="password"]:focus {
+      outline: none;
+      border-color: #eebbc3;
+    }
+
+    /* ===== Panel de configuración de APIs ===== */
+    .api-config {
+      margin: 15px 0;
+      background: #1a1a30;
+      border-radius: 8px;
+      padding: 0;
+      text-align: left;
+    }
+    .api-config > summary {
+      padding: 12px 16px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #eebbc3;
+      user-select: none;
+      list-style: none;
+    }
+    .api-config > summary::-webkit-details-marker { display: none; }
+    .api-config > summary::before {
+      content: '▶ ';
+      display: inline-block;
+      transition: transform 0.2s;
+      font-size: 0.8em;
+    }
+    .api-config[open] > summary::before { transform: rotate(90deg); }
+
+    .api-warning {
+      margin: 0 16px 12px;
+      padding: 10px 14px;
+      background: #3d2020;
+      border-left: 4px solid #ff595e;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: #ffb3b3;
+      line-height: 1.4;
+    }
+
+    .provider-config {
+      padding: 12px 16px;
+      border-top: 1px solid #2f2f4d;
+    }
+    .provider-config h3 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      color: #ffe066;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .provider-config label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      color: #b8b8d1;
+    }
+    .provider-config .row {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .provider-config .row input { flex: 1; }
+
+    .test-btn {
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      background: #4a4a6a;
+      color: #f4f4f4;
+    }
+    .test-btn:hover { background: #5a5a7a; }
+
+    .ai-status {
+      min-height: 20px;
+      margin: 8px 16px 16px;
+      font-size: 0.85rem;
+      color: #b8b8d1;
+    }
+    .ai-status.success { color: #6ee7a7; }
+    .ai-status.error   { color: #ff8080; }
+    .ai-status.pending { color: #ffe066; }
+
+    /* ===== Tablero ===== */
     .board {
       background: var(--board-color);
       padding: 10px;
@@ -73,6 +148,7 @@
       grid-template-rows: repeat(6, var(--cell-size));
       gap: 5px;
       margin: 20px auto;
+      position: relative;
     }
     .cell {
       background: white;
@@ -102,351 +178,787 @@
       background: var(--player2-color);
       box-shadow: inset -4px -4px 8px rgba(0, 0, 0, 0.2);
     }
-    .cell:hover {
-      background: #f0f0f0;
+    .cell:hover { background: #f0f0f0; }
+
+    /* Ficha flotante con caída y rebote rápido */
+    .floater {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10;
+      will-change: transform;
+      --fall: -1000px;
+      animation: dropBounce 0.38s forwards;
     }
-    #turnIndicator {
-      font-size: 1.2rem;
-      margin: 15px 0;
+    @keyframes dropBounce {
+      0%   { transform: translateY(var(--fall)); animation-timing-function: cubic-bezier(0.55, 0, 0.95, 0.45); }
+      72%  { transform: translateY(0); animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1); }
+      86%  { transform: translateY(-6px); animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.5); }
+      100% { transform: translateY(0); }
     }
-    #message {
-      min-height: 24px;
-      font-size: 1.15rem;
-      color: #eebbc3;
-      margin-top: 15px;
-    }
+
+    #turnIndicator { font-size: 1.2rem; margin: 15px 0; }
+    #message { min-height: 24px; font-size: 1.15rem; color: #eebbc3; margin-top: 15px; }
     @media (max-width: 600px) {
-      :root {
-        --cell-size: 45px;
-      }
-      .container {
-        padding: 15px;
-        margin: 10px;
-      }
-      .controls {
-        flex-direction: column;
-      }
-      .header-info {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-      }
+      :root { --cell-size: 45px; }
+      .container { padding: 15px; margin: 10px; }
+      .controls { flex-direction: column; }
+      .provider-config .row { flex-direction: column; }
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <h1>4 en Raya</h1>
-    <div class="controls">
-      <select id="modeSelect">
-        <option value="local">2 Jugadores</option>
-        <option value="ai">Jugador vs IA</option>
-      </select>
-      <select id="aiLevel" style="display:none;">
-        <option value="easy">Fácil</option>
-        <option value="medium">Medio</option>
-        <option value="hard">Difícil</option>
-      </select>
-      <button id="restartBtn">Reiniciar Juego</button>
-    </div>
-    <div id="turnIndicator">Turno: <span style="color: var(--player1-color)">Rojo</span></div>
-    <div class="board" id="board"></div>
-    <div id="message"></div>
+<div class="container">
+  <h1>4 en Raya · IA Pro</h1>
+
+  <div class="controls">
+    <select id="modeSelect">
+      <option value="local">2 Jugadores</option>
+      <option value="ai">Jugador vs IA (Local)</option>
+      <option value="ai-api">Jugador vs IA (API)</option>
+    </select>
+
+    <select id="aiLevel" style="display:none;">
+      <option value="medium">Medio</option>
+      <option value="hard" selected>Difícil</option>
+      <option value="expert">Experto (Negamax)</option>
+    </select>
+
+    <select id="apiProvider" style="display:none;">
+      <option value="openrouter">OpenRouter</option>
+      <option value="gemini">Gemini</option>
+      <option value="openai">OpenAI</option>
+    </select>
+
+    <button id="restartBtn">Reiniciar Juego</button>
   </div>
-  <script>
-    const ROWS = 6;
-    const COLS = 7;
-    const PLAYER1 = 1;
-    const PLAYER2 = 2;
-    let board = [];
-    let currentPlayer = PLAYER1;
-    let gameOver = false;
-    let aiEnabled = false;
-    const boardElement = document.getElementById('board');
-    const turnIndicator = document.getElementById('turnIndicator');
-    const message = document.getElementById('message');
-    const modeSelect = document.getElementById('modeSelect');
-    const aiLevelSelect = document.getElementById('aiLevel');
-    const restartBtn = document.getElementById('restartBtn');
 
-    function initGame() {
-      board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-      currentPlayer = PLAYER1;
-      gameOver = false;
-      createBoard();
-      updateTurnIndicator();
-      message.textContent = '';
+  <!-- ============ PANEL DE CONFIGURACIÓN DE APIs ============ -->
+  <details class="api-config" id="apiConfigPanel">
+    <summary>⚙️ Configuración de APIs (claves guardadas solo en tu navegador)</summary>
+
+    <p class="api-warning">
+      ⚠️ <strong>Aviso de seguridad:</strong> las API keys se guardan en
+      <code>localStorage</code> de este navegador. Cualquiera con acceso a tu
+      equipo o a las DevTools puede leerlas. No uses este archivo en un hosting
+      público con tus claves dentro, ni lo compartas sin vaciar los campos.
+      Revoca las claves si sospechas que se han filtrado.
+    </p>
+
+    <!-- OpenRouter -->
+    <div class="provider-config" data-provider="openrouter">
+      <h3>OpenRouter <button class="test-btn" data-provider="openrouter">Probar</button></h3>
+      <label>API Key
+        <div class="row">
+          <input type="password" id="openrouter-key" placeholder="sk-or-v1-..." autocomplete="off" spellcheck="false" />
+        </div>
+      </label>
+      <label>Modelo
+        <div class="row">
+          <input type="text" id="openrouter-model" list="openrouter-models" placeholder="openai/gpt-4o-mini" spellcheck="false" />
+          <datalist id="openrouter-models">
+            <option value="openai/gpt-4o-mini"></option>
+            <option value="openai/gpt-4o"></option>
+            <option value="anthropic/claude-3.5-sonnet"></option>
+            <option value="google/gemini-flash-1.5"></option>
+            <option value="meta-llama/llama-3.1-70b-instruct"></option>
+            <option value="mistralai/mistral-large"></option>
+          </datalist>
+        </div>
+      </label>
+    </div>
+
+    <!-- Gemini -->
+    <div class="provider-config" data-provider="gemini">
+      <h3>Google Gemini <button class="test-btn" data-provider="gemini">Probar</button></h3>
+      <label>API Key
+        <div class="row">
+          <input type="password" id="gemini-key" placeholder="AIza..." autocomplete="off" spellcheck="false" />
+        </div>
+      </label>
+      <label>Modelo
+        <div class="row">
+          <input type="text" id="gemini-model" list="gemini-models" placeholder="gemini-2.0-flash" spellcheck="false" />
+          <datalist id="gemini-models">
+            <option value="gemini-2.0-flash"></option>
+            <option value="gemini-1.5-flash"></option>
+            <option value="gemini-1.5-pro"></option>
+            <option value="gemini-2.5-flash"></option>
+            <option value="gemini-2.5-pro"></option>
+          </datalist>
+        </div>
+      </label>
+    </div>
+
+    <!-- OpenAI -->
+    <div class="provider-config" data-provider="openai">
+      <h3>OpenAI <button class="test-btn" data-provider="openai">Probar</button></h3>
+      <label>API Key
+        <div class="row">
+          <input type="password" id="openai-key" placeholder="sk-..." autocomplete="off" spellcheck="false" />
+        </div>
+      </label>
+      <label>Modelo
+        <div class="row">
+          <input type="text" id="openai-model" list="openai-models" placeholder="gpt-4o-mini" spellcheck="false" />
+          <datalist id="openai-models">
+            <option value="gpt-4o-mini"></option>
+            <option value="gpt-4o"></option>
+            <option value="gpt-3.5-turbo"></option>
+            <option value="gpt-4.1-mini"></option>
+            <option value="gpt-4.1"></option>
+          </datalist>
+        </div>
+      </label>
+    </div>
+
+    <div class="ai-status" id="aiStatus"></div>
+  </details>
+
+  <div id="turnIndicator">Turno: <span style="color: var(--player1-color)">Rojo</span></div>
+  <div class="board" id="board"></div>
+  <div id="message"></div>
+</div>
+
+<script>
+// ==================== ESTADO ====================
+const ROWS = 6;
+const COLS = 7;
+const PLAYER1 = 1;
+const PLAYER2 = 2;
+const EMPTY = 0;
+const STORAGE_KEY = 'connect4-api-config-v1';
+
+let board = [];
+let currentPlayer = PLAYER1;
+let gameOver = false;
+let aiEnabled = false;
+let useExternalAPI = false;
+let isAnimating = false;
+let isThinking  = false;
+
+const boardElement = document.getElementById('board');
+const turnIndicator = document.getElementById('turnIndicator');
+const messageEl = document.getElementById('message');
+const modeSelect = document.getElementById('modeSelect');
+const aiLevelSelect = document.getElementById('aiLevel');
+const apiProviderSelect = document.getElementById('apiProvider');
+const restartBtn = document.getElementById('restartBtn');
+const aiStatusEl = document.getElementById('aiStatus');
+
+const transpositionTable = new Map();
+
+// ==================== INICIALIZACIÓN ====================
+function initGame() {
+  board = Array.from({ length: ROWS }, () => Array(COLS).fill(EMPTY));
+  currentPlayer = PLAYER1;
+  gameOver = false;
+  isAnimating = false;
+  isThinking = false;
+  transpositionTable.clear();
+  createBoard();
+  updateTurnIndicator();
+  messageEl.textContent = '';
+}
+
+function createBoard() {
+  boardElement.innerHTML = '';
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < COLS; col++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.col = col;
+      cell.dataset.row = row;
+      cell.addEventListener('click', () => makeMove(col, false));
+      boardElement.appendChild(cell);
     }
+  }
+  updateBoardDisplay();
+}
 
-    function createBoard() {
-      boardElement.innerHTML = '';
-      for (let row = 0; row < ROWS; row++) {
-        for (let col = 0; col < COLS; col++) {
-          const cell = document.createElement('div');
-          cell.className = 'cell';
-          cell.dataset.col = col;
-          cell.dataset.row = row;
-          cell.addEventListener('click', () => makeMove(col, false));
-          boardElement.appendChild(cell);
+function updateBoardDisplay() {
+  const cells = boardElement.children;
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < COLS; col++) {
+      const idx = row * COLS + col;
+      const cell = cells[idx];
+      if (!cell || !cell.classList.contains('cell')) continue;
+      const val = board[row][col];
+      cell.className = 'cell' +
+        (val === PLAYER1 ? ' player1' : val === PLAYER2 ? ' player2' : '');
+    }
+  }
+}
+
+// ==================== MOVIMIENTO + ANIMACIÓN ====================
+function makeMove(col, isAIMove = false) {
+  if (gameOver || isAnimating || isThinking) return;
+  if (!isAIMove && aiEnabled && currentPlayer === PLAYER2) return;
+  if (col < 0 || col >= COLS) return;
+
+  const row = getLowestEmptyRow(col);
+  if (row === -1) return;
+
+  isAnimating = true;
+  const player = currentPlayer;
+
+  const boardRect = boardElement.getBoundingClientRect();
+  const targetCell = boardElement.children[row * COLS + col];
+  const targetRect = targetCell.getBoundingClientRect();
+
+  const pieceSize = targetRect.width * 0.9;
+  const pieceOffset = targetRect.width * 0.05;
+  const endY = (targetRect.top - boardRect.top) + pieceOffset;
+  const endX = (targetRect.left - boardRect.left) + pieceOffset;
+  const startY = -(pieceSize + 15);
+  const fallDist = endY - startY;
+
+  const floater = document.createElement('div');
+  floater.className = 'floater';
+  floater.style.width = pieceSize + 'px';
+  floater.style.height = pieceSize + 'px';
+  floater.style.left = endX + 'px';
+  floater.style.top = endY + 'px';
+  floater.style.background = player === PLAYER1 ? 'var(--player1-color)' : 'var(--player2-color)';
+  floater.style.boxShadow = 'inset -4px -4px 8px rgba(0,0,0,0.25)';
+  floater.style.setProperty('--fall', (-fallDist) + 'px');
+
+  boardElement.appendChild(floater);
+
+  floater.addEventListener('animationend', () => {
+    board[row][col] = player;
+    updateBoardDisplay();
+    floater.remove();
+    isAnimating = false;
+    finalizeMove(row, col);
+  }, { once: true });
+}
+
+function finalizeMove(row, col) {
+  if (checkWin(row, col, board[row][col])) {
+    gameOver = true;
+    messageEl.textContent = `¡${getPlayerName(board[row][col])} gana!`;
+    return;
+  }
+  if (isBoardFull()) {
+    gameOver = true;
+    messageEl.textContent = '¡Empate!';
+    return;
+  }
+  currentPlayer = currentPlayer === PLAYER1 ? PLAYER2 : PLAYER1;
+  updateTurnIndicator();
+  if (aiEnabled && currentPlayer === PLAYER2 && !gameOver) {
+    setTimeout(makeAIMove, 250);
+  }
+}
+
+// ==================== UTILIDADES ====================
+function getLowestEmptyRow(col) {
+  for (let row = ROWS - 1; row >= 0; row--) {
+    if (board[row][col] === EMPTY) return row;
+  }
+  return -1;
+}
+function isBoardFull() {
+  return board[0].every(cell => cell !== EMPTY);
+}
+function getPlayerName(player) {
+  if (aiEnabled && player === PLAYER2) return 'IA';
+  return player === PLAYER1 ? 'Rojo' : 'Amarillo';
+}
+function updateTurnIndicator() {
+  const color = currentPlayer === PLAYER1 ? 'var(--player1-color)' : 'var(--player2-color)';
+  const thinkingTxt = isThinking ? ' <em style="color:#ffe066">(pensando…)</em>' : '';
+  turnIndicator.innerHTML = `Turno: <span style="color: ${color}">${getPlayerName(currentPlayer)}</span>${thinkingTxt}`;
+}
+
+// ==================== VICTORIA ====================
+function checkWin(row, col, player) {
+  const dirs = [[0,1],[1,0],[1,1],[1,-1]];
+  for (const [dr, dc] of dirs) {
+    let count = 1;
+    for (let i = 1; i < 4; i++) {
+      const r = row + dr * i, c = col + dc * i;
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS || board[r][c] !== player) break;
+      count++;
+    }
+    for (let i = 1; i < 4; i++) {
+      const r = row - dr * i, c = col - dc * i;
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS || board[r][c] !== player) break;
+      count++;
+    }
+    if (count >= 4) return true;
+  }
+  return false;
+}
+
+// ==================== IA LOCAL ====================
+function makeAIMove() {
+  if (gameOver) return;
+
+  if (useExternalAPI) {
+    isThinking = true;
+    updateTurnIndicator();
+    const provider = apiProviderSelect.value;
+    setAIStatus(`Consultando ${provider}…`, 'pending');
+
+    callProvider(provider, board)
+      .then(col => {
+        isThinking = false;
+        updateTurnIndicator();
+        if (col !== null && col >= 0 && col < COLS && getLowestEmptyRow(col) !== -1) {
+          setAIStatus(`✅ ${provider}: columna ${col}`, 'success');
+          makeMove(col, true);
+        } else {
+          setAIStatus(`⚠️ ${provider} devolvió una columna inválida. Usando IA local.`, 'error');
+          fallbackAIMove();
         }
-      }
-      updateBoardDisplay();
-    }
-
-    function updateBoardDisplay() {
-      const cells = boardElement.children;
-      for (let row = 0; row < ROWS; row++) {
-        for (let col = 0; col < COLS; col++) {
-          const index = row * COLS + col;
-          const cell = cells[index];
-          cell.className = 'cell' + (board[row][col] === PLAYER1 ? ' player1' : board[row][col] === PLAYER2 ? ' player2' : '');
-        }
-      }
-    }
-
-    function makeMove(col, isAIMove = false) {
-      if (gameOver) return;
-      if (!isAIMove && aiEnabled && currentPlayer === PLAYER2) return;
-
-      const row = getLowestEmptyRow(col);
-      if (row === -1) return;
-
-      board[row][col] = currentPlayer;
-      updateBoardDisplay();
-
-      if (checkWin(row, col)) {
-        gameOver = true;
-        message.textContent = `¡${getPlayerName(currentPlayer)} gana!`;
-        return;
-      }
-
-      if (isBoardFull()) {
-        gameOver = true;
-        message.textContent = '¡Empate!';
-        return;
-      }
-
-      currentPlayer = currentPlayer === PLAYER1 ? PLAYER2 : PLAYER1;
-      updateTurnIndicator();
-
-      if (aiEnabled && currentPlayer === PLAYER2) {
-        setTimeout(makeAIMove, 500);
-      }
-    }
-
-    function getLowestEmptyRow(col) {
-      for (let row = ROWS - 1; row >= 0; row--) {
-        if (board[row][col] === 0) return row;
-      }
-      return -1;
-    }
-
-    function checkWin(row, col) {
-      const dirs = [
-        [[0, 1], [0, -1]], // horizontal
-        [[1, 0], [-1, 0]], // vertical
-        [[1, 1], [-1, -1]], // diagonal \
-        [[1, -1], [-1, 1]] // diagonal /
-      ];
-      return dirs.some(dir => {
-        let count = 1;
-        dir.forEach(([dx, dy]) => {
-          let x = col + dx;
-          let y = row + dy;
-          while (y >= 0 && y < ROWS && x >= 0 && x < COLS && board[y][x] === currentPlayer) {
-            count++;
-            x += dx;
-            y += dy;
-          }
-        });
-        return count >= 4;
+      })
+      .catch(err => {
+        isThinking = false;
+        updateTurnIndicator();
+        console.warn(err);
+        setAIStatus(`❌ ${err.message}. Usando IA local de respaldo.`, 'error');
+        fallbackAIMove();
       });
-    }
+    return;
+  }
 
-    function isBoardFull() {
-      return board[0].every(cell => cell !== 0);
-    }
+  const level = aiLevelSelect.value;
+  let col;
+  if (level === 'medium')    col = getMediumAIMove();
+  else if (level === 'hard') col = getHardAIMove();
+  else                        col = getExpertAIMove();
 
-    function getPlayerName(player) {
-      if (aiEnabled && player === PLAYER2) return 'IA';
-      return player === PLAYER1 ? 'Rojo' : 'Amarillo';
-    }
+  if (col !== null) makeMove(col, true);
+}
 
-    function updateTurnIndicator() {
-      const color = currentPlayer === PLAYER1 ? 'var(--player1-color)' : 'var(--player2-color)';
-      turnIndicator.innerHTML = `Turno: <span style="color: ${color}">${getPlayerName(currentPlayer)}</span>`;
-    }
+function fallbackAIMove() {
+  const col = getMediumAIMove();
+  if (col !== null) makeMove(col, true);
+}
 
-    function makeAIMove() {
-      const level = aiLevelSelect.value;
-      let col;
-      if (level === 'easy') {
-        col = getRandomValidMove();
-      } else if (level === 'medium') {
-        col = getMediumAIMove();
-      } else {
-        col = getHardAIMove();
+function getMediumAIMove() {
+  for (let col = 0; col < COLS; col++) {
+    const row = getLowestEmptyRow(col);
+    if (row === -1) continue;
+    board[row][col] = PLAYER2;
+    const wins = checkWin(row, col, PLAYER2);
+    board[row][col] = EMPTY;
+    if (wins) return col;
+  }
+  for (let col = 0; col < COLS; col++) {
+    const row = getLowestEmptyRow(col);
+    if (row === -1) continue;
+    board[row][col] = PLAYER1;
+    const wins = checkWin(row, col, PLAYER1);
+    board[row][col] = EMPTY;
+    if (wins) return col;
+  }
+  const valid = [];
+  for (let col = 0; col < COLS; col++) {
+    if (getLowestEmptyRow(col) !== -1) valid.push(col);
+  }
+  if (!valid.length) return null;
+  valid.sort((a, b) => Math.abs(3 - a) - Math.abs(3 - b));
+  const pool = valid.slice(0, Math.min(3, valid.length));
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function getHardAIMove() {
+  let bestScore = -Infinity, bestCol = null;
+  for (let col = 0; col < COLS; col++) {
+    const row = getLowestEmptyRow(col);
+    if (row === -1) continue;
+    board[row][col] = PLAYER2;
+    const score = negamax(board, 4, -Infinity, Infinity, -1);
+    board[row][col] = EMPTY;
+    if (score > bestScore) { bestScore = score; bestCol = col; }
+  }
+  return bestCol;
+}
+
+function getExpertAIMove() {
+  const MAX_TIME_MS = 2500;
+  const startTime = performance.now();
+  let bestMove = null;
+  for (let depth = 1; depth <= 9; depth++) {
+    if (performance.now() - startTime > MAX_TIME_MS) break;
+    const move = searchAtDepth(depth, startTime, MAX_TIME_MS);
+    if (move !== null) bestMove = move;
+  }
+  return bestMove === null ? getHardAIMove() : bestMove;
+}
+
+function searchAtDepth(depth, startTime, maxTime) {
+  let bestScore = -Infinity, bestCol = null;
+  const orderedCols = [3, 2, 4, 1, 5, 0, 6].filter(c => getLowestEmptyRow(c) !== -1);
+  for (const col of orderedCols) {
+    if (performance.now() - startTime > maxTime) return bestCol;
+    const row = getLowestEmptyRow(col);
+    board[row][col] = PLAYER2;
+    const score = negamax(board, depth, -Infinity, Infinity, -1);
+    board[row][col] = EMPTY;
+    if (score > bestScore) { bestScore = score; bestCol = col; }
+  }
+  return bestCol;
+}
+
+function negamax(b, depth, alpha, beta, color) {
+  const terminal = checkTerminal(b);
+  if (terminal !== null) {
+    if (terminal === PLAYER2) return 1000000 + depth * 100;
+    if (terminal === PLAYER1) return -1000000 - depth * 100;
+    return 0;
+  }
+  if (depth === 0) return evaluateBoard(b) * color;
+
+  const key = boardKey(b) + '|' + depth + '|' + color;
+  if (transpositionTable.has(key)) return transpositionTable.get(key);
+
+  const moveOrder = [3, 2, 4, 1, 5, 0, 6];
+  if (color === 1) {
+    let maxScore = -Infinity;
+    for (const col of moveOrder) {
+      const row = getLowestEmptyRowIn(b, col);
+      if (row === -1) continue;
+      b[row][col] = PLAYER2;
+      const score = negamax(b, depth - 1, alpha, beta, -1);
+      b[row][col] = EMPTY;
+      maxScore = Math.max(maxScore, score);
+      alpha = Math.max(alpha, score);
+      if (beta <= alpha) break;
+    }
+    transpositionTable.set(key, maxScore);
+    return maxScore;
+  } else {
+    let minScore = Infinity;
+    for (const col of moveOrder) {
+      const row = getLowestEmptyRowIn(b, col);
+      if (row === -1) continue;
+      b[row][col] = PLAYER1;
+      const score = negamax(b, depth - 1, alpha, beta, 1);
+      b[row][col] = EMPTY;
+      minScore = Math.min(minScore, score);
+      beta = Math.min(beta, score);
+      if (beta <= alpha) break;
+    }
+    transpositionTable.set(key, minScore);
+    return minScore;
+  }
+}
+
+function getLowestEmptyRowIn(b, col) {
+  for (let row = ROWS - 1; row >= 0; row--) {
+    if (b[row][col] === EMPTY) return row;
+  }
+  return -1;
+}
+
+function checkTerminal(b) {
+  for (let row = 0; row < ROWS; row++)
+    for (let col = 0; col < COLS - 3; col++) {
+      const v = b[row][col];
+      if (v !== EMPTY && v === b[row][col+1] && v === b[row][col+2] && v === b[row][col+3]) return v;
+    }
+  for (let row = 0; row < ROWS - 3; row++)
+    for (let col = 0; col < COLS; col++) {
+      const v = b[row][col];
+      if (v !== EMPTY && v === b[row+1][col] && v === b[row+2][col] && v === b[row+3][col]) return v;
+    }
+  for (let row = 0; row < ROWS - 3; row++)
+    for (let col = 0; col < COLS - 3; col++) {
+      const v = b[row][col];
+      if (v !== EMPTY && v === b[row+1][col+1] && v === b[row+2][col+2] && v === b[row+3][col+3]) return v;
+    }
+  for (let row = 0; row < ROWS - 3; row++)
+    for (let col = 3; col < COLS; col++) {
+      const v = b[row][col];
+      if (v !== EMPTY && v === b[row+1][col-1] && v === b[row+2][col-2] && v === b[row+3][col-3]) return v;
+    }
+  if (b[0].every(cell => cell !== EMPTY)) return 0;
+  return null;
+}
+
+function evaluateBoard(b) {
+  let score = 0;
+  for (let row = 0; row < ROWS; row++) {
+    if (b[row][3] === PLAYER2) score += 6;
+    else if (b[row][3] === PLAYER1) score -= 6;
+    for (const c of [2, 4]) {
+      if (b[row][c] === PLAYER2) score += 3;
+      else if (b[row][c] === PLAYER1) score -= 3;
+    }
+  }
+  const dirs = [[0,1],[1,0],[1,1],[1,-1]];
+  for (let row = 0; row < ROWS; row++)
+    for (let col = 0; col < COLS; col++)
+      for (const [dr, dc] of dirs) {
+        const endRow = row + dr * 3, endCol = col + dc * 3;
+        if (endRow < 0 || endRow >= ROWS || endCol < 0 || endCol >= COLS) continue;
+        const w = [];
+        for (let i = 0; i < 4; i++) w.push(b[row + dr * i][col + dc * i]);
+        score += evaluateWindow(w);
       }
-      if (col !== null) makeMove(col, true);
-    }
+  return score;
+}
+function evaluateWindow(w) {
+  const ai = w.filter(c => c === PLAYER2).length;
+  const hu = w.filter(c => c === PLAYER1).length;
+  const em = w.filter(c => c === EMPTY).length;
+  if (ai === 4) return 100000;
+  if (ai === 3 && em === 1) return 1000;
+  if (ai === 2 && em === 2) return 50;
+  if (ai === 1 && em === 3) return 5;
+  if (hu === 4) return -100000;
+  if (hu === 3 && em === 1) return -1200;
+  if (hu === 2 && em === 2) return -60;
+  if (hu === 1 && em === 3) return -6;
+  return 0;
+}
+function boardKey(b) { return b.map(r => r.join('')).join(''); }
 
-    function getRandomValidMove() {
-      const validMoves = [];
-      for (let col = 0; col < COLS; col++) {
-        if (getLowestEmptyRow(col) !== -1) validMoves.push(col);
-      }
-      return validMoves[Math.floor(Math.random() * validMoves.length)];
-    }
+// ==================== PROMPT + PARSER ====================
+// Se le da al modelo un prompt estricto con la jugada de victoria/bloqueo
+// calculada localmente, para que no tenga que "razonar" mecánica que ya
+// sabemos. Así minimizamos sus alucinaciones.
+function buildPrompt(currentBoard) {
+  const boardStr = currentBoard.map(row => row.join('')).join('');
+  const availCols = [];
+  for (let c = 0; c < COLS; c++) {
+    if (getLowestEmptyRow(c) !== -1) availCols.push(c);
+  }
 
-    function getMediumAIMove() {
-      for (let col = 0; col < COLS; col++) {
-        const row = getLowestEmptyRow(col);
-        if (row !== -1) {
-          board[row][col] = PLAYER2;
-          if (checkWin(row, col)) {
-            board[row][col] = 0;
-            return col;
-          }
-          board[row][col] = 0;
+  // Calcular jugadas críticas localmente y pasárselas como pistas
+  let winningCol = null, blockingCol = null;
+  for (const c of availCols) {
+    const r = getLowestEmptyRow(c);
+    currentBoard[r][c] = PLAYER2;
+    if (checkWin(r, c, PLAYER2)) winningCol = c;
+    currentBoard[r][c] = EMPTY;
+    if (winningCol !== null) break;
+  }
+  if (winningCol === null) {
+    for (const c of availCols) {
+      const r = getLowestEmptyRow(c);
+      currentBoard[r][c] = PLAYER1;
+      if (checkWin(r, c, PLAYER1)) blockingCol = c;
+      currentBoard[r][c] = EMPTY;
+      if (blockingCol !== null) break;
+    }
+  }
+
+  return [
+    'You are playing Connect 4 as player 2 (yellow).',
+    'The board is 6 rows x 7 columns. Board string is row by row from TOP to BOTTOM, each row left to right.',
+    'Characters: "0"=empty, "1"=opponent (red), "2"=you (yellow).',
+    '',
+    'Board: ' + boardStr,
+    '',
+    'Available columns (zero-indexed, not full): ' + availCols.join(', '),
+    '',
+    winningCol !== null
+      ? 'IMMEDIATE WIN AVAILABLE: dropping in column ' + winningCol + ' wins the game. You MUST choose it.'
+      : blockingCol !== null
+        ? 'OPPONENT WINS NEXT TURN in column ' + blockingCol + '. You MUST block it by choosing it.'
+        : 'No immediate win or forced block. Choose the best strategic column (center preferred).',
+    '',
+    'Reply with ONLY the digit of your chosen column (a single character 0 to ' + (COLS - 1) + ').',
+    'No explanation, no punctuation, no formatting. Just the digit.'
+  ].join('\n');
+}
+
+function parseColumn(text) {
+  if (!text) return null;
+  const t = text.trim();
+  if (/^[0-6]$/.test(t)) return parseInt(t, 10);
+  const m1 = t.match(/(?:column|columna|col|play|jugar|choice|answer|respuesta)\s*[:=]?\s*([0-6])/i);
+  if (m1) return parseInt(m1[1], 10);
+  const m2 = t.match(/[0-6]/);
+  return m2 ? parseInt(m2[0], 10) : null;
+}
+
+// ==================== LLAMADAS A PROVEEDORES ====================
+function getProviderConfig(provider) {
+  return {
+    key:   document.getElementById(provider + '-key').value.trim(),
+    model: document.getElementById(provider + '-model').value.trim()
+  };
+}
+
+async function callProvider(provider, currentBoard) {
+  const { key, model } = getProviderConfig(provider);
+  if (!key)   throw new Error('Falta la API key de ' + provider);
+  if (!model) throw new Error('Falta el modelo de ' + provider);
+
+  const prompt = buildPrompt(currentBoard);
+
+  if (provider === 'openai')     return callOpenAI(key, model, prompt);
+  if (provider === 'gemini')     return callGemini(key, model, prompt);
+  if (provider === 'openrouter') return callOpenRouter(key, model, prompt);
+  throw new Error('Proveedor desconocido: ' + provider);
+}
+
+async function callOpenAI(key, model, prompt) {
+  // Algunos modelos razonadores (o1, o3, o4) requieren max_completion_tokens y
+  // no aceptan temperature. Detectamos por prefijo.
+  const isReasoning = /^o\d/.test(model);
+  const body = {
+    model,
+    messages: [{ role: 'user', content: prompt }]
+  };
+  if (isReasoning) {
+    body.max_completion_tokens = 100;
+  } else {
+    body.max_tokens = 10;
+    body.temperature = 0;
+  }
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + key
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error('OpenAI HTTP ' + res.status + ' ' + errText.slice(0, 120));
+  }
+  const data = await res.json();
+  return parseColumn(data.choices?.[0]?.message?.content);
+}
+
+async function callGemini(key, model, prompt) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { maxOutputTokens: 20, temperature: 0 }
+    })
+  });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error('Gemini HTTP ' + res.status + ' ' + errText.slice(0, 120));
+  }
+  const data = await res.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  return parseColumn(text);
+}
+
+async function callOpenRouter(key, model, prompt) {
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + key,
+      'HTTP-Referer': location.origin || 'http://localhost',
+      'X-Title': '4 en Raya IA Pro'
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 10,
+      temperature: 0
+    })
+  });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error('OpenRouter HTTP ' + res.status + ' ' + errText.slice(0, 120));
+  }
+  const data = await res.json();
+  return parseColumn(data.choices?.[0]?.message?.content);
+}
+
+// ==================== PERSISTENCIA + UI ====================
+function setAIStatus(msg, type = '') {
+  aiStatusEl.textContent = msg;
+  aiStatusEl.className = 'ai-status ' + type;
+}
+
+function loadAPIConfig() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    for (const provider of ['openrouter', 'gemini', 'openai']) {
+      if (!saved[provider]) continue;
+      const keyEl   = document.getElementById(provider + '-key');
+      const modelEl = document.getElementById(provider + '-model');
+      if (keyEl   && saved[provider].key)   keyEl.value   = saved[provider].key;
+      if (modelEl && saved[provider].model) modelEl.value = saved[provider].model;
+    }
+  } catch (e) {
+    console.warn('No se pudo cargar la configuración de API:', e);
+  }
+}
+
+function saveAPIConfig() {
+  const config = {};
+  for (const provider of ['openrouter', 'gemini', 'openai']) {
+    config[provider] = {
+      key:   document.getElementById(provider + '-key').value,
+      model: document.getElementById(provider + '-model').value
+    };
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+}
+
+function bindAPIConfigEvents() {
+  for (const provider of ['openrouter', 'gemini', 'openai']) {
+    document.getElementById(provider + '-key').addEventListener('input', saveAPIConfig);
+    document.getElementById(provider + '-model').addEventListener('input', saveAPIConfig);
+  }
+
+  // Botones "Probar"
+  document.querySelectorAll('.test-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const provider = btn.dataset.provider;
+      setAIStatus(`Probando ${provider}…`, 'pending');
+
+      // Posición de prueba: tablero casi vacío, con una ficha roja y otra
+      // amarilla en la base. Sirve para verificar credenciales y modelo.
+      const testBoard = Array.from({ length: ROWS }, () => Array(COLS).fill(EMPTY));
+      testBoard[ROWS - 1][0] = PLAYER1;
+      testBoard[ROWS - 1][1] = PLAYER2;
+
+      try {
+        const col = await callProvider(provider, testBoard);
+        if (col !== null && col >= 0 && col < COLS && testBoard[0][col] === EMPTY) {
+          setAIStatus(`✅ ${provider} OK (columna ${col})`, 'success');
+        } else {
+          setAIStatus(`⚠️ ${provider} respondió pero no devolvió una columna válida`, 'error');
         }
+      } catch (err) {
+        setAIStatus(`❌ ${provider}: ${err.message}`, 'error');
       }
-      for (let col = 0; col < COLS; col++) {
-        const row = getLowestEmptyRow(col);
-        if (row !== -1) {
-          board[row][col] = PLAYER1;
-          if (checkWin(row, col)) {
-            board[row][col] = 0;
-            return col;
-          }
-          board[row][col] = 0;
-        }
-      }
-      return getRandomValidMove();
-    }
-
-    function getHardAIMove() {
-      let bestScore = -Infinity;
-      let bestMove = null;
-      for (let col = 0; col < COLS; col++) {
-        const row = getLowestEmptyRow(col);
-        if (row !== -1) {
-          board[row][col] = PLAYER2;
-          const score = minimax(board, 4, -Infinity, Infinity, false);
-          board[row][col] = 0;
-          if (score > bestScore) {
-            bestScore = score;
-            bestMove = col;
-          }
-        }
-      }
-      return bestMove;
-    }
-
-    function minimax(board, depth, alpha, beta, isMaximizing) {
-      if (depth === 0) return evaluateBoard();
-
-      if (isMaximizing) {
-        let maxScore = -Infinity;
-        for (let col = 0; col < COLS; col++) {
-          const row = getLowestEmptyRow(col);
-          if (row !== -1) {
-            board[row][col] = PLAYER2;
-            const score = minimax(board, depth - 1, alpha, beta, false);
-            board[row][col] = 0;
-            maxScore = Math.max(score, maxScore);
-            alpha = Math.max(alpha, score);
-            if (beta <= alpha) break;
-          }
-        }
-        return maxScore;
-      } else {
-        let minScore = Infinity;
-        for (let col = 0; col < COLS; col++) {
-          const row = getLowestEmptyRow(col);
-          if (row !== -1) {
-            board[row][col] = PLAYER1;
-            const score = minimax(board, depth - 1, alpha, beta, true);
-            board[row][col] = 0;
-            minScore = Math.min(score, minScore);
-            beta = Math.min(beta, score);
-            if (beta <= alpha) break;
-          }
-        }
-        return minScore;
-      }
-    }
-
-    function evaluateBoard() {
-      let score = 0;
-      const centerCol = Math.floor(COLS / 2);
-      const centerCount = board.filter(row => row[centerCol] === PLAYER2).length;
-      score += centerCount * 3;
-
-      for (let row = 0; row < ROWS; row++) {
-        for (let col = 0; col < COLS - 3; col++) {
-          score += evaluateWindow([
-            board[row][col],
-            board[row][col + 1],
-            board[row][col + 2],
-            board[row][col + 3],
-          ]);
-        }
-      }
-
-      for (let row = 0; row < ROWS - 3; row++) {
-        for (let col = 0; col < COLS; col++) {
-          score += evaluateWindow([
-            board[row][col],
-            board[row + 1][col],
-            board[row + 2][col],
-            board[row + 3][col],
-          ]);
-        }
-      }
-
-      for (let row = 0; row < ROWS - 3; row++) {
-        for (let col = 0; col < COLS - 3; col++) {
-          score += evaluateWindow([
-            board[row][col],
-            board[row + 1][col + 1],
-            board[row + 2][col + 2],
-            board[row + 3][col + 3],
-          ]);
-          score += evaluateWindow([
-            board[row][col + 3],
-            board[row + 1][col + 2],
-            board[row + 2][col + 1],
-            board[row + 3][col],
-          ]);
-        }
-      }
-
-      return score;
-    }
-
-    function evaluateWindow(window) {
-      const aiCount = window.filter(cell => cell === PLAYER2).length;
-      const playerCount = window.filter(cell => cell === PLAYER1).length;
-      const emptyCount = window.filter(cell => cell === 0).length;
-      if (aiCount === 4) return 100;
-      if (playerCount === 4) return -100;
-      if (aiCount === 3 && emptyCount === 1) return 5;
-      if (playerCount === 3 && emptyCount === 1) return -4;
-      if (aiCount === 2 && emptyCount === 2) return 2;
-      if (playerCount === 2 && emptyCount === 2) return -1;
-      return 0;
-    }
-
-    modeSelect.addEventListener('change', e => {
-      aiEnabled = e.target.value === 'ai';
-      aiLevelSelect.style.display = aiEnabled ? 'inline-block' : 'none';
-      initGame();
     });
+  });
+}
 
-    restartBtn.addEventListener('click', initGame);
+// ==================== EVENTOS ====================
+modeSelect.addEventListener('change', (e) => {
+  const mode = e.target.value;
+  aiEnabled = mode !== 'local';
+  useExternalAPI = mode === 'ai-api';
+  aiLevelSelect.style.display = (aiEnabled && !useExternalAPI) ? 'inline-block' : 'none';
+  apiProviderSelect.style.display = useExternalAPI ? 'inline-block' : 'none';
+  if (useExternalAPI) {
+    document.getElementById('apiConfigPanel').open = true;
+  }
+  initGame();
+});
 
-    initGame();
-  </script>
+restartBtn.addEventListener('click', initGame);
+
+// Arranque
+loadAPIConfig();
+bindAPIConfigEvents();
+initGame();
+</script>
 </body>
 </html>
